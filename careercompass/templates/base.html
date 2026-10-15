@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}CareerCompass{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    :root {
+      /* ── Core surfaces — near-black, cool blue undertone ── */
+      --bg: #05070d;
+      --bg2: #090c14;
+      --bg3: #0e121c;
+      --surface: #11141f;
+      --surface2: #171b29;
+      --border: #1c2130;
+      --border2: #262c40;
+      --text: #eef1fa;
+      --text2: #99a1b8;
+      --text3: #5b6278;
+
+      /* ── Primary accent: electric blue ── */
+      --accent: #3d7dff;
+      --accent2: #6fa2ff;
+      --accent-dim: rgba(61, 125, 255, 0.13);
+
+      /* ── Gold — reserved for small highlight moments only ── */
+      --gold: #eab308;
+      --gold2: #fbd34d;
+      --gold-dim: rgba(234, 179, 8, 0.10);
+
+      /* ── Semantic status colors (not brand colors — kept distinct) ── */
+      --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.12);
+      --blue: #3d7dff;
+      --blue-dim: rgba(61, 125, 255, 0.13);
+      --purple: #8b7cf6;
+      --purple-dim: rgba(139, 124, 246, 0.12);
+      --red: #ef4444;
+
+      --font: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --radius: 12px;
+      --radius-lg: 18px;
+      --ease: cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      line-height: 1.6;
+      animation: pageEnter .5s var(--ease) both;
+    }
+
+    @keyframes pageEnter {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+    body.page-exit {
+      animation: pageExit .24s var(--ease) forwards;
+      pointer-events: none;
+    }
+    @keyframes pageExit {
+      to { opacity: 0; transform: translateY(-8px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body { animation: none; }
+      body.page-exit { animation: none; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(5, 7, 13, 0.82);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-brand .dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.4rem 0.9rem;
+      border-radius: 8px;
+      transition: all 0.2s var(--ease);
+    }
+
+    .nav-links a:hover { color: var(--text); background: var(--surface); }
+    .nav-links a.active { color: var(--accent2); background: var(--accent-dim); }
+
+    /* ── Profile dropdown ── */
+    .nav-right { display: flex; align-items: center; gap: 1.25rem; }
+    .nav-login-link {
+      color: var(--text2); text-decoration: none; font-size: 0.88rem;
+      font-weight: 600; padding: 0.45rem 1rem; border-radius: 8px;
+      border: 1px solid var(--border2); transition: all 0.2s var(--ease);
+    }
+    .nav-login-link:hover { color: var(--text); border-color: var(--accent); }
+
+    .nav-profile { position: relative; }
+    .nav-avatar-btn {
+      width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--border2);
+      background: var(--surface); cursor: pointer; padding: 0; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; transition: border-color .2s var(--ease);
+    }
+    .nav-avatar-btn:hover { border-color: var(--accent); }
+    .nav-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .nav-avatar-fallback {
+      font-family: var(--mono); font-weight: 700; font-size: 0.85rem;
+      color: var(--accent2); background: var(--accent-dim); width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-profile-menu {
+      position: absolute; top: calc(100% + 10px); right: 0; min-width: 210px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.55); overflow: hidden;
+      opacity: 0; pointer-events: none; transform: translateY(-6px);
+      transition: all .22s var(--ease); z-index: 200;
+    }
+    .nav-profile-menu.open { opacity: 1; pointer-events: auto; transform: none; }
+    .nav-profile-menu-head { padding: .8rem 1rem; border-bottom: 1px solid var(--border); }
+    .nav-profile-menu-head .nm-name { font-size: .85rem; font-weight: 700; color: var(--text); }
+    .nav-profile-menu-head .nm-email { font-size: .74rem; color: var(--text3); margin-top: .15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nav-profile-menu a, .nav-profile-menu button {
+      display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+      padding: .65rem 1rem; font-size: .85rem; color: var(--text2); text-decoration: none;
+      background: none; border: none; cursor: pointer; font-family: var(--font); transition: all .15s var(--ease);
+    }
+    .nav-profile-menu a i, .nav-profile-menu button i { font-size: 1.05rem; color: var(--text3); }
+    .nav-profile-menu a:hover, .nav-profile-menu button:hover { background: var(--bg3); color: var(--text); }
+    .nav-profile-menu a:hover i, .nav-profile-menu button:hover i { color: var(--accent2); }
+    .nav-profile-menu .nm-signout { color: #f3a9a9; border-top: 1px solid var(--border); }
+    .nav-profile-menu .nm-signout i { color: #f3a9a9; }
+    .nav-profile-menu .nm-signout:hover { background: rgba(239,68,68,.1); }
+
+    /* MAIN LAYOUT */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.6rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      text-decoration: none;
+      border: none;
+      font-family: var(--font);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(61,125,255,.25);
+    }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(61,125,255,.35); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border2);
+    }
+    .btn-outline:hover { color: var(--text); border-color: var(--accent); background: var(--surface); }
+
+    /* CARDS */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      transition: all 0.25s var(--ease);
+    }
+
+    .card:hover {
+      border-color: var(--border2);
+      transform: translateY(-3px);
+      box-shadow: 0 14px 36px rgba(0,0,0,0.45);
+    }
+
+    /* BADGE */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-amber { background: var(--gold-dim); color: var(--gold2); }
+    .badge-green { background: var(--green-dim); color: var(--green); }
+    .badge-blue { background: var(--blue-dim); color: var(--accent2); }
+    .badge-purple { background: var(--purple-dim); color: var(--purple); }
+
+    /* SECTION TITLE */
+    .section-header { margin-bottom: 2rem; }
+
+    .section-header .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--accent2);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-header h1, .section-header h2 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    .section-header p { color: var(--text2); margin-top: 0.5rem; font-size: 1rem; }
+
+    /* GRID */
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1.25rem; }
+
+    /* LOADING */
+    .loading-overlay {
+      position: fixed; inset: 0; background: rgba(5,7,13,0.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999; flex-direction: column; gap: 1rem; backdrop-filter: blur(4px);
+    }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text { color: var(--text2); font-size: 0.9rem; font-family: var(--mono); }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--surface2); border: 1px solid var(--border2);
+      padding: 0.75rem 1.25rem; border-radius: 10px; font-size: 0.875rem;
+      z-index: 200; transform: translateY(80px); opacity: 0;
+      transition: all 0.35s var(--ease);
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* PULSE DOT */
+    .pulse-dot {
+      display: inline-block; width: 8px; height: 8px;
+      background: var(--green); border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    }
+
+    {% block extra_css %}{% endblock %}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-brand">
+      <div class="dot"></div>
+      Career<span style="color:var(--accent2)">Compass</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Home</a></li>
+      <li><a href="/roles" {% if request.path.startswith('/roles') or (request.path.startswith('/roadmap/role')) %}class="active"{% endif %}>Role Roadmaps</a></li>
+      <li><a href="/skills" {% if request.path.startswith('/skills') or (request.path.startswith('/roadmap/skill')) %}class="active"{% endif %}>Skill Roadmaps</a></li>
+      <li><a href="/opportunities" {% if request.path.startswith('/opportunities') %}class="active"{% endif %}>Opportunities</a></li>
+    </ul>
+    <div class="nav-right">
+      {% if current_user %}
+      <div class="nav-profile">
+        <button class="nav-avatar-btn" id="navProfileBtn" title="{{ current_user.name or current_user.email }}">
+          {% if current_user.avatar_url %}
+            <img src="{{ current_user.avatar_url }}" class="nav-avatar-img" alt="">
+          {% else %}
+            <span class="nav-avatar-fallback">{{ (current_user.name or current_user.email or '?')[0]|upper }}</span>
+          {% endif %}
+        </button>
+        <div class="nav-profile-menu" id="navProfileMenu">
+          <div class="nav-profile-menu-head">
+            <div class="nm-name">{{ current_user.name or 'Your Account' }}</div>
+            <div class="nm-email">{{ current_user.email }}</div>
+          </div>
+          <a href="/profile/"><i class='bx bx-user-circle'></i> Profile &amp; Settings</a>
+          <a href="/dashboard"><i class='bx bx-compass'></i> Dashboard</a>
+          <button class="nm-signout" id="navSignOutBtn"><i class='bx bx-log-out'></i> Sign out</button>
+        </div>
+      </div>
+      {% else %}
+      <a href="/login" class="nav-login-link">Sign In</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    function showToast(msg, duration=3000) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), duration);
+    }
+
+    // Profile dropdown
+    const navProfileBtn = document.getElementById('navProfileBtn');
+    const navProfileMenu = document.getElementById('navProfileMenu');
+    if (navProfileBtn && navProfileMenu) {
+      navProfileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navProfileMenu.classList.toggle('open');
+      });
+      document.addEventListener('click', () => navProfileMenu.classList.remove('open'));
+      navProfileMenu.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    const navSignOutBtn = document.getElementById('navSignOutBtn');
+    if (navSignOutBtn) {
+      navSignOutBtn.addEventListener('click', async () => {
+        try { await fetch('/auth/logout', { method: 'POST' }); } catch (e) {}
+        window.location.href = '/login';
+      });
+    }
+
+    // ── Page-exit transition: fades the page out before navigating away on
+    // any plain same-origin link click, so page-to-page movement feels like
+    // one continuous motion rather than an abrupt reload. Entrance animation
+    // is pure CSS (see body{animation:pageEnter...} above) so it still runs
+    // even if this script fails to execute. Only intercepts plain <a> clicks
+    // — JS-driven redirects elsewhere in the app (e.g. after an async login)
+    // are unaffected by this and navigate instantly, same as before.
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (!link) return;
+      if (link.target === '_blank' || link.hasAttribute('download') || link.dataset.noTransition !== undefined) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+
+      const href = link.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return;
+
+      let url;
+      try { url = new URL(href, window.location.href); } catch (err) { return; }
+      if (url.origin !== window.location.origin) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      e.preventDefault();
+      document.body.classList.add('page-exit');
+      setTimeout(() => { window.location.href = url.href; }, 240);
+    });
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

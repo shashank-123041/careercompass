@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block title %}Role Roadmaps — CareerCompass{% endblock %}
+
+{% block extra_css %}
+.page-hero {
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  min-width: 260px;
+  transition: border-color 0.2s;
+}
+
+.search-bar:focus-within {
+  border-color: var(--accent);
+}
+
+.search-bar input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.search-bar input::placeholder { color: var(--text3); }
+
+.search-icon { color: var(--text3); font-size: 0.9rem; }
+
+/* Roadmap Grid */
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1rem;
+}
+
+.roadmap-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.25s;
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  position: relative;
+}
+
+.roadmap-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.roadmap-card:hover::before { opacity: 1; }
+
+.roadmap-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+
+.roadmap-card-inner {
+  padding: 1.4rem 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.roadmap-icon {
+  width: 46px; height: 46px;
+  min-width: 46px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  transition: all 0.25s;
+}
+
+.roadmap-card:hover .roadmap-icon {
+  background: var(--accent-dim);
+  border-color: rgba(245,158,11,0.3);
+}
+
+.roadmap-info { flex: 1; min-width: 0; }
+
+.roadmap-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+
+.roadmap-desc {
+  font-size: 0.82rem;
+  color: var(--text3);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.roadmap-card-footer {
+  padding: 0.7rem 1.5rem;
+  background: var(--bg3);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.roadmap-card-footer .type-badge {
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.roadmap-card-footer .view-link {
+  font-size: 0.78rem;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+
+.roadmap-card:hover .view-link { color: var(--accent); }
+
+/* Section divider */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2.5rem 0 1.5rem;
+}
+
+.section-divider h3 {
+  font-size: 0.8rem;
+  font-family: var(--mono);
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.section-divider .line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* No results */
+.no-results {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text3);
+  display: none;
+}
+
+.no-results.show { display: block; }
+{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="section-header" style="margin-bottom:0">
+    <div class="eyebrow">📍 Role-Based</div>
+    <h1>Career Roadmaps</h1>
+    <p>Choose your engineering role and get a structured learning path</p>
+  </div>
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search roadmaps..." autocomplete="off">
+  </div>
+</div>
+
+<div class="section-divider">
+  <h3>All Roles</h3>
+  <div class="line"></div>
+  <span class="badge badge-amber">{{ roadmaps|length }} roadmaps</span>
+</div>
+
+<div class="roadmap-grid" id="roadmapGrid">
+  {% for r in roadmaps %}
+  <a href="/roadmap/role/{{ r.slug }}" class="roadmap-card" data-title="{{ r.title|lower }}">
+    <div class="roadmap-card-inner">
+      <div class="roadmap-icon">{{ r.icon }}</div>
+      <div class="roadmap-info">
+        <div class="roadmap-title">{{ r.title }}</div>
+        <div class="roadmap-desc">{{ r.brief_desc or r.description }}</div>
+      </div>
+    </div>
+    <div class="roadmap-card-footer">
+      <span class="type-badge">ROLE</span>
+      <span class="view-link">View roadmap →</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="no-results" id="noResults">
+  <div style="font-size:2.5rem;margin-bottom:1rem">🔍</div>
+  <p>No roadmaps found matching your search.</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const input = document.getElementById('searchInput');
+  const cards = document.querySelectorAll('.roadmap-card');
+  const noResults = document.getElementById('noResults');
+
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    let visible = 0;
+    cards.forEach(card => {
+      const title = card.getAttribute('data-title') || '';
+      const match = !q || title.includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    noResults.classList.toggle('show', visible === 0);
+  });
+</script>
+{% endblock %}

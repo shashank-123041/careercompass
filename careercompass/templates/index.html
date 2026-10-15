@@ -1,0 +1,991 @@
+{% extends "base.html" %}
+{% block title %}CareerCompass — Developer Roadmaps{% endblock %}
+{% block extra_css %}
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap');
+
+/* ══════════════════════════════════════════════
+   ANONYMOUS MARKETING HERO (unchanged)
+════════════════════════════════════════════ */
+.hero{text-align:center;padding:5rem 1rem 4rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:700px;background:radial-gradient(circle,rgba(245,158,11,.07) 0%,transparent 65%);pointer-events:none}
+.hero .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.75rem;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.5rem;background:var(--accent-dim);padding:.35rem 1rem;border-radius:20px;border:1px solid rgba(245,158,11,.2)}
+.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.04em;line-height:1.1;margin-bottom:1.25rem}
+.hero h1 .hi{background:linear-gradient(135deg,var(--accent),#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{color:var(--text2);font-size:1.15rem;max-width:580px;margin:0 auto 2.5rem;line-height:1.7}
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.hero-stats{display:flex;gap:3rem;justify-content:center;margin-top:4rem;padding-top:3rem;border-top:1px solid var(--border);flex-wrap:wrap}
+.stat .num{font-size:2rem;font-weight:800;letter-spacing:-.03em}.stat .num span{color:var(--accent)}
+.stat .lbl{font-size:.8rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:.25rem;text-align:center}
+.mode-banner{display:inline-flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.75rem 1.25rem;margin-top:1.5rem;font-size:.85rem;color:var(--text2)}
+.mode-banner .ml{font-family:var(--mono);color:var(--accent);font-size:.8rem}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:3rem}
+@media(max-width:768px){.dash-grid{grid-template-columns:1fr}.hero-stats{gap:1.5rem}}
+.dc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:all .3s;text-decoration:none;display:block}
+.dc:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 16px 48px rgba(0,0,0,.5)}
+.dc-head{padding:2rem 2rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--surface2) 0%,var(--surface) 100%)}
+.iw{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem}
+.iw-r{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.25)}
+.iw-s{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
+.dc-head h2{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.5rem}
+.dc-head p{color:var(--text2);font-size:.9rem;line-height:1.5}
+.dc-body{padding:1.5rem 2rem}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.chip{font-size:.78rem;padding:.25rem .7rem;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--mono)}
+.dc-foot{padding:1rem 2rem;background:var(--bg3);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:.85rem}
+.dc-foot .cnt{color:var(--text3)}.dc-foot .arr{color:var(--accent);font-weight:600}
+.feats{margin-top:4rem;padding-top:3rem;border-top:1px solid var(--border)}
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin-top:2rem}
+.fi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem}
+.fi .fi-ic{font-size:1.5rem;margin-bottom:.75rem}
+.fi h3{font-size:.95rem;font-weight:600;margin-bottom:.35rem}
+.fi p{font-size:.82rem;color:var(--text3);line-height:1.5}
+
+/* ══════════════════════════════════════════════
+   PERSONALIZED DASHBOARD — compact header + cards
+════════════════════════════════════════════ */
+.dash-hero{padding:1.75rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1.75rem}
+.dash-greet{font-size:1.15rem;font-weight:700;letter-spacing:-.01em;margin-bottom:.2rem}
+.dash-greet .wave{display:inline-block;animation:wave 2.2s ease-in-out infinite;font-size:1.05rem}
+@keyframes wave{0%,100%{transform:rotate(0deg)}15%{transform:rotate(14deg)}30%{transform:rotate(-8deg)}45%{transform:rotate(14deg)}60%{transform:rotate(0deg)}}
+.dash-sub{color:var(--text3);font-size:.82rem}
+
+.rm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.65rem;margin-top:1.1rem}
+.rm-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:all .18s;position:relative;cursor:pointer}
+.rm-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.rm-card.primary{border-color:rgba(245,158,11,.35)}
+.rm-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(245,158,11,.15)}
+.rm-card-link{display:block;padding:.85rem .95rem;text-decoration:none;color:inherit}
+.rm-card-remove{
+  position:absolute; top:.4rem; right:.4rem; z-index:2;
+  width:20px; height:20px; border-radius:50%;
+  background:var(--bg3); border:1px solid var(--border);
+  color:var(--text3); font-size:.62rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:all .15s;
+}
+.rm-card:hover .rm-card-remove{ opacity:1; }
+.rm-card-remove:hover{ color:#ef4444; border-color:#ef4444; background:rgba(239,68,68,.1); }
+.rm-card-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.55rem}
+.rm-card-icon{font-size:1.1rem}
+.rm-card-title{font-size:.83rem;font-weight:700;flex:1;padding-right:1rem;line-height:1.25}
+.rm-card-badge{font-size:.56rem;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:.1rem .4rem;border-radius:9px;letter-spacing:.03em}
+.rm-card-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:.35rem}
+.rm-card-fill{height:100%;background:var(--green);border-radius:2px}
+.rm-card-pct{font-size:.68rem;color:var(--text3);font-family:var(--mono)}
+.rm-card-pct strong{color:var(--green)}
+.dash-add-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;border:1.5px dashed var(--border2);border-radius:12px;padding:.85rem;text-decoration:none;color:var(--text3);font-size:.76rem;transition:all .2s;min-height:76px}
+.dash-add-card:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ══════════════════════════════════════════════
+   INLINE ROADMAP VIEWER — same trail-map engine
+   as roadmap_detail.html, embedded on this page
+════════════════════════════════════════════ */
+#viewerWrap{ display:none; margin-top:2rem; }
+#viewerWrap.ready{ display:block; }
+
+.viewer-head{ display:flex; align-items:center; gap:10px; margin-bottom:1rem; }
+.viewer-icon{ font-size:1.4rem; }
+.viewer-title{ font-family:'Sora',var(--font); font-weight:800; font-size:1.15rem; flex:1; letter-spacing:-.01em; }
+.viewer-ext-link{ font-size:.76rem; color:var(--text3); text-decoration:none; font-family:var(--mono); }
+.viewer-ext-link:hover{ color:var(--accent); }
+
+.viewer-state{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:2.5rem 2rem; text-align:center; }
+.viewer-state .spinner{ margin:0 auto 1rem; }
+.viewer-state p{ color:var(--text2); font-size:.88rem; }
+
+.rm-canvas{ display:none; position:relative; }
+.rm-canvas.ready{ display:block; }
+.rm-canvas::before{
+  content:''; position:absolute; inset:-20px -20px auto -20px; height:100%;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(245,158,11,.025) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(90deg, rgba(245,158,11,.025) 0 1px, transparent 1px 42px);
+  pointer-events:none; z-index:0;
+}
+.rm-canvas::after{
+  content:''; position:absolute; top:-100px; left:50%; transform:translateX(-50%);
+  width:600px; height:460px;
+  background:radial-gradient(circle, rgba(245,158,11,.08) 0%, transparent 70%);
+  pointer-events:none; z-index:0;
+}
+.rm-canvas > *{ position:relative; z-index:1; }
+
+.rm-progress{
+  display:flex; align-items:center; gap:14px;
+  background:linear-gradient(160deg, rgba(30,30,36,.92), rgba(20,20,24,.8));
+  border:1px solid var(--border); border-radius:14px;
+  padding:.9rem 1.15rem; margin-bottom:1rem;
+  backdrop-filter: blur(8px);
+}
+.rm-progress-track{ flex:1; height:9px; background:var(--bg3); border-radius:5px; overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,.4); }
+.rm-progress-fill{ height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:5px; width:0%; transition:width .4s ease; box-shadow:0 0 10px rgba(245,158,11,.55); }
+.rm-progress-label{ font-size:.78rem; font-family:var(--mono); color:var(--text2); white-space:nowrap; }
+.rm-progress-pct{ font-family:'Sora',var(--font); font-weight:800; font-size:.95rem; color:var(--accent2); white-space:nowrap; }
+.rm-progress-reset{ background:none; border:1px solid var(--border2); color:var(--text3); font-size:.7rem; padding:.3rem .65rem; border-radius:6px; cursor:pointer; white-space:nowrap; font-family:var(--font); }
+.rm-progress-reset:hover{ color:#ef4444; border-color:#ef4444; }
+
+.rm-toolbar{ display:flex; gap:.6rem; margin-bottom:1rem; flex-wrap:wrap; }
+.rm-search-wrap{ flex:1; min-width:180px; position:relative; }
+.rm-search-wrap .ic{ position:absolute; left:.7rem; top:50%; transform:translateY(-50%); color:var(--text3); font-size:.8rem; pointer-events:none; }
+.rm-search{ width:100%; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:.55rem .8rem .55rem 2rem; color:var(--text); font-size:.83rem; outline:none; font-family:var(--font); }
+.rm-search:focus{ border-color:var(--accent); }
+.rm-toolbar-btn{ background:var(--surface); border:1px solid var(--border); color:var(--text2); border-radius:9px; padding:.55rem .95rem; font-size:.78rem; font-weight:600; cursor:pointer; white-space:nowrap; font-family:var(--font); }
+.rm-toolbar-btn:hover{ color:var(--text); border-color:var(--border2); }
+
+.rm-legend{ display:flex; gap:1.1rem; flex-wrap:wrap; align-items:center; font-size:.74rem; color:var(--text3); margin-bottom:1.5rem; padding:0 .1rem; }
+.legend-item{ display:flex; align-items:center; gap:6px; }
+.legend-swatch{ width:13px; height:13px; border-radius:4px; flex-shrink:0; }
+.legend-swatch.req{ border:1.5px solid rgba(245,158,11,.6); background:rgba(245,158,11,.08); }
+.legend-swatch.opt{ border:1.5px dashed var(--border2); background:transparent; }
+.legend-dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 4px var(--accent); }
+.legend-check{ width:13px; height:13px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; }
+.legend-check svg{ width:8px; height:8px; }
+
+#trailWrap{ position:relative; }
+#trailSvg{ position:absolute; top:0; left:0; pointer-events:none; overflow:visible; z-index:0; }
+#trailBg{ fill:none; stroke:var(--border2); stroke-width:2.5; stroke-dasharray:3 11; stroke-linecap:round; }
+#trailFg{ fill:none; stroke:url(#trailGrad); stroke-width:3; stroke-linecap:round; filter:drop-shadow(0 0 6px rgba(245,158,11,.65)); transition:stroke-dashoffset .5s ease; }
+
+.trail-stepper{ display:flex; flex-direction:column; gap:84px; position:relative; z-index:2; }
+
+.waypoint{ display:flex; align-items:flex-start; gap:18px; }
+.waypoint.wp-right{ flex-direction:row-reverse; }
+@media (max-width:760px){ .waypoint.wp-right{ flex-direction:row; } }
+
+.wp-marker-col{ width:46px; flex-shrink:0; display:flex; justify-content:center; padding-top:2px; }
+.wp-marker{
+  width:44px; height:44px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #2a2a30, #16161a);
+  border:2.5px solid var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Sora',var(--font); font-weight:800; font-size:.92rem; color:var(--accent2);
+  box-shadow:0 0 0 4px rgba(245,158,11,.08), 0 0 18px rgba(245,158,11,.35);
+  flex-shrink:0; transition:all .3s ease;
+}
+.wp-marker.done{ border-color:var(--green); color:#eafff1; background:radial-gradient(circle at 35% 30%, #1c3a27, #0e2016); box-shadow:0 0 0 4px rgba(34,197,94,.1), 0 0 18px rgba(34,197,94,.4); }
+.wp-marker.partial{ border-color:var(--accent); box-shadow:0 0 0 4px rgba(245,158,11,.14), 0 0 22px rgba(245,158,11,.45); }
+.wp-marker.current{ animation: wp-pulse 2.2s ease-in-out infinite; }
+.wp-marker svg{ width:16px; height:16px; }
+@keyframes wp-pulse{
+  0%,100% { box-shadow:0 0 0 4px rgba(245,158,11,.12), 0 0 18px rgba(245,158,11,.4); }
+  50%     { box-shadow:0 0 0 9px rgba(245,158,11,.05), 0 0 26px rgba(245,158,11,.6); }
+}
+
+.wp-content{ flex:1; min-width:0; }
+
+.step-card{
+  position:relative; border-radius:16px; overflow:hidden;
+  background:linear-gradient(165deg, rgba(32,32,38,.92), rgba(19,19,23,.88));
+  border:1px solid rgba(255,255,255,.07);
+  backdrop-filter: blur(10px);
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+.step-card::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity:.7;
+}
+.step-card-head{ display:flex; align-items:center; gap:10px; padding:13px 17px; cursor:pointer; user-select:none; }
+.step-card-head:hover{ background:rgba(255,255,255,.03); }
+.step-chevron{ width:16px; height:16px; flex-shrink:0; color:var(--text3); transition:transform .2s ease; }
+.step-card.collapsed .step-chevron{ transform:rotate(-90deg); }
+.step-card-title{ font-family:'Sora',var(--font); font-weight:700; font-size:.94rem; flex:1; letter-spacing:-.01em; }
+.step-card-count{ font-size:.7rem; color:var(--text3); font-family:var(--mono); white-space:nowrap; }
+.step-res-badge{ font-size:.66rem; background:var(--accent-dim); color:var(--accent); border:none; border-radius:20px; padding:.22rem .6rem; font-family:var(--mono); cursor:pointer; white-space:nowrap; font-weight:700; }
+.step-res-badge:hover{ background:var(--accent); color:#000; }
+.step-card-body{ padding:2px 17px 17px; display:flex; flex-direction:column; gap:12px; border-top:1px solid rgba(255,255,255,.06); padding-top:13px; }
+.step-card.collapsed .step-card-body{ display:none; }
+
+.chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+
+.topic-chip{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:6px 12px 6px 6px; border-radius:10px;
+  border:1.5px solid rgba(245,158,11,.4);
+  background:linear-gradient(160deg, rgba(245,158,11,.1), rgba(245,158,11,.03));
+  cursor:pointer; font-size:.81rem; color:var(--text);
+  max-width:280px; transition:all .18s; position:relative; font-family:var(--font);
+}
+.topic-chip:hover{ border-color:var(--accent); transform:translateY(-2px); box-shadow:0 6px 16px rgba(245,158,11,.25); }
+.topic-chip.optional{ border-style:dashed; border-color:var(--border2); background:transparent; }
+.topic-chip.optional:hover{ border-color:var(--text3); background:var(--surface2); box-shadow:none; }
+.topic-chip.active{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(245,158,11,.3); }
+.topic-chip.done{ border-color:var(--green); background:linear-gradient(160deg, rgba(34,197,94,.16), rgba(34,197,94,.04)); box-shadow:0 0 10px rgba(34,197,94,.15); }
+.topic-chip.sub{ font-size:.74rem; padding:4px 10px 4px 5px; max-width:220px; }
+
+.chip-check{ width:16px; height:16px; border-radius:50%; flex-shrink:0; border:1.5px solid var(--border2); background:var(--bg3); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.chip-check svg{ width:9px; height:9px; opacity:0; transition:opacity .15s; }
+.topic-chip.done .chip-check{ background:var(--green); border-color:var(--green); }
+.topic-chip.done .chip-check svg{ opacity:1; }
+
+.chip-label{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.chip-res-dot{ width:5px; height:5px; min-width:5px; border-radius:50%; background:var(--accent); box-shadow:0 0 4px var(--accent); flex-shrink:0; }
+
+.subsection{ border-left:3px solid var(--blue); padding-left:12px; display:flex; flex-direction:column; gap:8px; }
+.subsection-head{ display:flex; align-items:center; gap:8px; font-size:.78rem; font-weight:700; color:var(--text2); }
+
+.wp-standalone .topic-chip{ width:100%; max-width:none; justify-content:center; padding:.85rem 1.2rem; font-size:.87rem; border-radius:14px; }
+
+.rm-no-match{ text-align:center; padding:2.5rem 1rem; color:var(--text3); font-size:.85rem; display:none; }
+.rm-no-match.show{ display:block; }
+.waypoint.filtered-out{ display:none; }
+.step-card .chip-row .topic-chip.filtered-out{ display:none; }
+.subsection.filtered-out{ display:none; }
+
+#resDrawerBackdrop{ position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:998; }
+#resDrawerBackdrop.open{ opacity:1; pointer-events:auto; }
+#resDrawer{
+  position:fixed; top:0; right:0; height:100vh; width:420px; max-width:92vw;
+  background:linear-gradient(175deg, rgba(30,30,36,.98), rgba(16,16,19,.98));
+  border-left:1px solid rgba(255,255,255,.08);
+  z-index:999; transform:translateX(100%); transition:transform .28s cubic-bezier(.2,.8,.2,1);
+  display:flex; flex-direction:column; box-shadow:-20px 0 60px rgba(0,0,0,.55);
+}
+#resDrawer.open{ transform:translateX(0); }
+.drawer-head{ padding:1.1rem 1.3rem; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:1rem; background:rgba(255,255,255,.02); flex-shrink:0; }
+.drawer-head h4{ font-family:'Sora',var(--font); font-size:.92rem; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.drawer-close{ background:none; border:none; color:var(--text3); font-size:1.15rem; cursor:pointer; padding:.25rem .5rem; border-radius:6px; transition:all .15s; }
+.drawer-close:hover{ color:#ef4444; background:rgba(239,68,68,.1); }
+.drawer-body{ padding:1.2rem 1.4rem; overflow-y:auto; flex:1; }
+
+.rp-desc{ font-size:.875rem; color:var(--text2); line-height:1.65; margin-bottom:1.1rem; padding-bottom:1.1rem; border-bottom:1px solid var(--border); }
+.rp-loading{ display:flex; align-items:center; gap:10px; padding:.5rem 0 1rem; color:var(--text3); font-size:.85rem; }
+.rp-loading .mini-spin{ width:18px; height:18px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
+
+.res-list{ display:flex; flex-direction:column; gap:.45rem; }
+.res-item{ display:flex; align-items:center; gap:.75rem; padding:.6rem .9rem; background:var(--bg3); border:1px solid var(--border); border-radius:9px; text-decoration:none; transition:all .15s; }
+.res-item:hover{ border-color:var(--border2); background:var(--surface2); transform:translateX(3px); }
+.rt{ font-size:.65rem; font-weight:700; padding:.12rem .45rem; border-radius:4px; letter-spacing:.05em; white-space:nowrap; font-family:var(--mono); flex-shrink:0; }
+.rt-official{ background:var(--green-dim); color:var(--green); }
+.rt-article,.rt-feed,.rt-website{ background:var(--blue-dim); color:var(--blue); }
+.rt-video{ background:rgba(239,68,68,.12); color:#ef4444; }
+.rt-course{ background:var(--purple-dim); color:var(--purple); }
+.rt-opensource{ background:var(--surface2); border:1px solid var(--border); color:var(--text2); }
+.rt-other{ background:var(--surface2); color:var(--text3); }
+.res-title{ font-size:.83rem; color:var(--text); font-weight:500; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.res-domain{ font-size:.7rem; color:var(--text3); white-space:nowrap; flex-shrink:0; }
+
+.res-fallback{ display:flex; flex-direction:column; gap:.4rem; }
+.res-fallback a{ display:flex; align-items:center; gap:.75rem; padding:.6rem .9rem; background:var(--bg3); border:1px solid var(--border); border-radius:9px; text-decoration:none; color:var(--text); font-size:.83rem; font-weight:500; transition:all .15s; }
+.res-fallback a:hover{ border-color:var(--border2); background:var(--surface2); transform:translateX(3px); }
+.res-fallback .rt{ flex-shrink:0; }
+
+.drawer-mark-btn{
+  display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+  padding:.65rem; border-radius:9px; font-size:.82rem; font-weight:700; cursor:pointer;
+  border:1.5px solid var(--green); background:rgba(34,197,94,.1); color:var(--green);
+  margin-bottom:1.1rem; font-family:var(--font); transition:all .15s;
+}
+.drawer-mark-btn.is-done{ background:var(--green); color:#08130c; box-shadow:0 0 14px rgba(34,197,94,.4); }
+.drawer-mark-btn:hover{ filter:brightness(1.12); }
+
+.rp-footer{ margin-top:.9rem; padding-top:.9rem; border-top:1px solid var(--border); text-align:center; }
+.rp-footer a{ color:var(--accent); font-size:.78rem; font-weight:600; text-decoration:none; }
+.rp-footer a:hover{ text-decoration:underline; }
+
+@media (max-width: 640px) {
+  #resDrawer{ width:100%; max-width:none; top:auto; bottom:0; height:82vh; border-left:none; border-top:1px solid var(--border); border-radius:20px 20px 0 0; transform:translateY(100%); }
+  #resDrawer.open{ transform:translateY(0); }
+}
+{% endblock %}
+{% block content %}
+{% if user %}
+<!-- ══ PERSONALIZED DASHBOARD ══ -->
+<section class="dash-hero">
+  <div class="dash-greet"><span class="wave">👋</span> Welcome back{% if user.name %}, {{ user.name.split(' ')[0] }}{% endif %}</div>
+  <p class="dash-sub">
+    {% if user_roadmaps %}Pick a roadmap to continue.{% else %}You haven't added a roadmap yet.{% endif %}
+  </p>
+
+  <div class="rm-cards" id="rmCards">
+    {% for rm in user_roadmaps %}
+    <div class="rm-card{% if rm.is_primary %} primary{% endif %}"
+         data-roadmap-id="{{ rm.id }}" data-slug="{{ rm.slug }}" data-type="{{ rm.type }}">
+      <button class="rm-card-remove" title="Remove {{ rm.title }} from My Roadmaps"
+              data-roadmap-id="{{ rm.id }}" data-roadmap-title="{{ rm.title }}">✕</button>
+      <a href="#" class="rm-card-link" onclick="return selectRoadmap(event, this)">
+        <div class="rm-card-top">
+          <span class="rm-card-icon">{{ rm.icon }}</span>
+          <span class="rm-card-title">{{ rm.title }}</span>
+          {% if rm.is_primary %}<span class="rm-card-badge">DEFAULT</span>{% endif %}
+        </div>
+        <div class="rm-card-bar"><div class="rm-card-fill" style="width:{{ rm.progress_pct }}%"></div></div>
+        <div class="rm-card-pct"><strong>{{ rm.progress_pct }}%</strong> complete</div>
+      </a>
+    </div>
+    {% endfor %}
+    <a href="/roles" class="dash-add-card">
+      <span style="font-size:1.2rem">+</span>
+      <span>Add another roadmap</span>
+    </a>
+  </div>
+</section>
+
+<!-- ══ INLINE ROADMAP VIEWER ══ -->
+<div id="viewerWrap">
+  <div class="viewer-head">
+    <span class="viewer-icon" id="viewerIcon">📚</span>
+    <span class="viewer-title" id="viewerTitle">—</span>
+    <a class="viewer-ext-link" id="viewerExtLink" href="#" target="_blank" rel="noopener">View on roadmap.sh ↗</a>
+  </div>
+
+  <div class="viewer-state" id="stLoading">
+    <div class="spinner"></div>
+    <p>Loading roadmap…</p>
+  </div>
+  <div class="viewer-state" id="stError" style="display:none">
+    <p>⚠️ <span id="stErrMsg">Could not load roadmap</span></p>
+  </div>
+  <div class="viewer-state" id="stEmpty" style="display:none;border-style:dashed">
+    <p>⏳ Topics not yet extracted for this roadmap.</p>
+  </div>
+
+  <div class="rm-canvas" id="rmCanvas">
+    <div class="rm-progress">
+      <span class="rm-progress-label" id="progressLabel">0 / 0 completed</span>
+      <div class="rm-progress-track"><div class="rm-progress-fill" id="progressFill"></div></div>
+      <span class="rm-progress-pct" id="progressPct">0%</span>
+      <button class="rm-progress-reset" id="progressResetBtn" title="Clear all checked topics">Reset</button>
+    </div>
+
+    <div class="rm-toolbar">
+      <div class="rm-search-wrap">
+        <span class="ic">🔍</span>
+        <input type="text" class="rm-search" id="rmSearch" placeholder="Filter topics…" autocomplete="off">
+      </div>
+      <button class="rm-toolbar-btn" id="collapseAllBtn">Collapse all</button>
+      <button class="rm-toolbar-btn" id="expandAllBtn">Expand all</button>
+    </div>
+
+    <div class="rm-legend">
+      <span class="legend-item"><span class="legend-swatch req"></span> Core topic</span>
+      <span class="legend-item"><span class="legend-swatch opt"></span> Optional</span>
+      <span class="legend-item"><span class="legend-dot"></span> Has resources</span>
+      <span class="legend-item"><span class="legend-check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="#08130c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Completed</span>
+    </div>
+
+    <div id="trailWrap">
+      <svg id="trailSvg">
+        <defs>
+          <linearGradient id="trailGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--accent2)"/>
+            <stop offset="100%" stop-color="var(--accent)"/>
+          </linearGradient>
+        </defs>
+        <path id="trailBg" d=""></path>
+        <path id="trailFg" d=""></path>
+      </svg>
+      <div class="trail-stepper" id="rmStepper"></div>
+    </div>
+    <div class="rm-no-match" id="rmNoMatch">No topics match your filter.</div>
+  </div>
+</div>
+
+<div id="resDrawerBackdrop"></div>
+<div id="resDrawer">
+  <div class="drawer-head">
+    <h4 id="rpTitle">📚 Resources</h4>
+    <button class="drawer-close" onclick="closeDrawer()" title="Close">✕</button>
+  </div>
+  <div class="drawer-body" id="rpBody"></div>
+</div>
+
+{% else %}
+<section class="hero">
+  <div class="eyebrow"><span class="pulse-dot"></span> Powered by GitHub — nilbuild/developer-roadmap</div>
+  <h1>Developer Roadmaps<br><span class="hi">From the Source</span></h1>
+  <p>All roadmap data — nodes, edges, topics, resources — read directly from the official <strong>nilbuild/developer-roadmap</strong> GitHub repository and stored locally for instant serving.</p>
+  <div class="hero-btns">
+    <a href="/roles" class="btn btn-primary">🗺️ Role Roadmaps</a>
+    <a href="/skills" class="btn btn-outline">⚡ Skill Roadmaps</a>
+    <a href="/admin" class="btn btn-outline">⚙️ Dashboard</a>
+  </div>
+  <div class="mode-banner">
+    {% if mode == 'local' %}<span class="pulse-dot"></span><span>Local repo mode</span><span class="ml">ROADMAP_REPO_PATH = set ✓</span>
+    {% else %}<span>Remote GitHub mode</span><span class="ml">github.com/nilbuild/developer-roadmap</span>{% endif %}
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="num">{{ stats.total }}<span>+</span></div><div class="lbl">Roadmaps</div></div>
+    <div class="stat"><div class="num">{{ stats.roles }}</div><div class="lbl">Role Paths</div></div>
+    <div class="stat"><div class="num">{{ stats.skills }}</div><div class="lbl">Skill Paths</div></div>
+    <div class="stat"><div class="num">{% if stats.topics > 999 %}{{ (stats.topics // 1000) }}k{% else %}{{ stats.topics }}{% endif %}<span>+</span></div><div class="lbl">Topics</div></div>
+    <div class="stat"><div class="num">{% if stats.resources > 999 %}{{ (stats.resources // 1000) }}k{% else %}{{ stats.resources }}{% endif %}<span>+</span></div><div class="lbl">Resources</div></div>
+  </div>
+</section>
+<div class="dash-grid">
+  <a href="/roles" class="dc">
+    <div class="dc-head"><div class="iw iw-r">🗺️</div><h2>Role-Based Roadmaps</h2><p>Career paths for engineering roles. Know exactly what to learn to land your dream job as a Frontend, DevOps, or ML engineer.</p></div>
+    <div class="dc-body"><div class="chips"><span class="chip">Frontend</span><span class="chip">Backend</span><span class="chip">DevOps</span><span class="chip">Full Stack</span><span class="chip">AI Engineer</span></div></div>
+    <div class="dc-foot"><span class="cnt">{{ stats.roles }} roadmaps in knowledge base</span><span class="arr">Explore roles →</span></div>
+  </a>
+  <a href="/skills" class="dc">
+    <div class="dc-head"><div class="iw iw-s">⚡</div><h2>Skill-Based Roadmaps</h2><p>Master individual technologies with step-by-step learning paths. Python, React, Docker, Kubernetes — complete topic trees with resources.</p></div>
+    <div class="dc-body"><div class="chips"><span class="chip">Python</span><span class="chip">JavaScript</span><span class="chip">React</span><span class="chip">Docker</span><span class="chip">Kubernetes</span></div></div>
+    <div class="dc-foot"><span class="cnt">{{ stats.skills }} roadmaps in knowledge base</span><span class="arr">Explore skills →</span></div>
+  </a>
+</div>
+<section class="feats">
+  <div class="section-header"><div class="eyebrow">Architecture</div><h2>How it works</h2></div>
+  <div class="fg">
+    <div class="fi"><div class="fi-ic">📦</div><h3>Official GitHub Source</h3><p>Data comes directly from nilbuild/developer-roadmap — the same repo that powers roadmap.sh.</p></div>
+    <div class="fi"><div class="fi-ic">🌲</div><h3>react-flow → Tree</h3><p>Parses nodes + edges JSON from the repo, reconstructs the full topic hierarchy with depth and ordering.</p></div>
+    <div class="fi"><div class="fi-ic">📚</div><h3>Real Resources</h3><p>Each topic's content/*.md file is parsed for official links, articles, videos, and courses.</p></div>
+    <div class="fi"><div class="fi-ic">🗄️</div><h3>SQLite Knowledge Base</h3><p>All data stored locally. Every page load is served from disk — zero network latency.</p></div>
+    <div class="fi"><div class="fi-ic">🔄</div><h3>Auto Sync</h3><p>Background thread re-syncs from the repo on schedule. Local mode completes in seconds.</p></div>
+    <div class="fi"><div class="fi-ic">⚙️</div><h3>Two Modes</h3><p>Local clone (recommended, instant) or GitHub API fallback — configured via a single env variable.</p></div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if user %}
+<script>
+/* ══════════════════════════════════════════════
+   INLINE ROADMAP VIEWER — same trail-map engine as
+   roadmap_detail.html, driven by whichever card is
+   selected instead of a separate page.
+════════════════════════════════════════════ */
+let CURRENT_SLUG = null;
+let activeChip = null, activeNode = null, fetchCache = {};
+let allChips = [], sectionMap = [], trailLen = 0, segLens = [], scratchPath = null;
+
+function selectRoadmap(e, linkEl) {
+  e.preventDefault();
+  const card = linkEl.closest('.rm-card');
+  document.querySelectorAll('.rm-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  loadRoadmapInto(card.dataset.slug, card.dataset.type);
+  document.getElementById('viewerWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  return false;
+}
+
+/* Bound via addEventListener (not inline onclick) specifically to avoid
+   HTML-attribute quoting issues — Jinja's |tojson output isn't safe to
+   embed inside a double-quoted onclick="" attribute, since it wraps
+   strings in literal " characters that aren't escaped for that context. */
+document.querySelectorAll('.rm-card-remove').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const roadmapId = btn.dataset.roadmapId;
+    const title = btn.dataset.roadmapTitle;
+    if (!confirm(`Remove "${title}" from your roadmaps? Your progress on it will be kept if you add it back later.`)) return;
+    try {
+      const r = await fetch(`/api/v2/user/roadmaps/${roadmapId}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      window.location.reload();
+    } catch (err) {
+      showToast('⚠️ Could not remove roadmap — try again');
+    }
+  });
+});
+
+async function loadRoadmapInto(slug, type) {
+  CURRENT_SLUG = slug;
+  document.getElementById('viewerWrap').classList.add('ready');
+  showState('loading');
+  document.getElementById('rmCanvas').classList.remove('ready');
+  closeDrawer();
+  fetchCache = {};
+
+  try {
+    const r = await fetch('/api/v2/roadmap/' + slug);
+    const d = await r.json();
+    if (!r.ok) {
+      if (r.status === 404) showState('empty');
+      else showState('error', d.error || 'HTTP ' + r.status);
+      return;
+    }
+    document.getElementById('viewerExtLink').href = `https://roadmap.sh/${slug}`;
+    renderRoadmap(d);
+  } catch (e) {
+    showState('error', e.message);
+  }
+}
+
+function showState(s, msg) {
+  document.getElementById('stLoading').style.display = s === 'loading' ? '' : 'none';
+  document.getElementById('stError').style.display   = s === 'error'   ? '' : 'none';
+  document.getElementById('stEmpty').style.display    = s === 'empty'   ? '' : 'none';
+  if (msg) document.getElementById('stErrMsg').textContent = msg;
+}
+
+function renderRoadmap(data) {
+  const rm = data.roadmap || {};
+  const tree = data.topics || [];
+
+  document.getElementById('viewerIcon').textContent = rm.icon || '📚';
+  document.getElementById('viewerTitle').textContent = rm.title || CURRENT_SLUG;
+
+  if (!tree.length) { showState('empty'); return; }
+  showState('none');
+
+  const stepper = document.getElementById('rmStepper');
+  stepper.innerHTML = '';
+  allChips = [];
+  sectionMap = [];
+
+  tree.forEach((section, i) => {
+    stepper.appendChild(buildWaypoint(section, i + 1, i % 2 === 1));
+  });
+
+  document.getElementById('rmCanvas').classList.add('ready');
+  updateAllProgress();
+  requestAnimationFrame(drawTrail);
+}
+
+function buildWaypoint(section, num, right) {
+  const wp = mk('div', 'waypoint ' + (right ? 'wp-right' : 'wp-left'));
+  const markerCol = mk('div', 'wp-marker-col');
+  const marker = mk('div', 'wp-marker');
+  marker.textContent = num;
+  markerCol.appendChild(marker);
+  wp.appendChild(markerCol);
+
+  const content = mk('div', 'wp-content');
+  const hasChildren = section.children && section.children.length > 0;
+
+  if (!hasChildren) {
+    const wrap = mk('div', 'wp-standalone');
+    const chip = makeChip(section);
+    wrap.appendChild(chip);
+    content.appendChild(wrap);
+    sectionMap.push({ marker, chips: [chip] });
+  } else {
+    const card = buildCard(section);
+    content.appendChild(card.el);
+    sectionMap.push({ marker, chips: card.chips });
+  }
+  wp.appendChild(content);
+  return wp;
+}
+
+function buildCard(section) {
+  const card = mk('div', 'step-card');
+  const chips = [];
+
+  const head = mk('div', 'step-card-head');
+  head.appendChild(svgChevron());
+  const title = mk('span', 'step-card-title');
+  title.textContent = section.title;
+  head.appendChild(title);
+
+  const totalCount = countLeaves(section);
+  const countEl = mk('span', 'step-card-count');
+  countEl.textContent = totalCount + ' topics';
+  head.appendChild(countEl);
+
+  const resCnt = (section.resources || []).length;
+  if (resCnt) {
+    const badge = mk('button', 'step-res-badge');
+    badge.type = 'button';
+    badge.textContent = resCnt + ' res';
+    badge.addEventListener('click', e => { e.stopPropagation(); openDrawer(section); });
+    head.appendChild(badge);
+  }
+
+  head.addEventListener('click', () => { card.classList.toggle('collapsed'); requestAnimationFrame(drawTrail); });
+  card.appendChild(head);
+
+  const body = mk('div', 'step-card-body');
+  const hasSubGroups = section.children.some(c => c.children && c.children.length > 0);
+
+  if (hasSubGroups) {
+    let looseRow = null;
+    section.children.forEach(child => {
+      if (child.children && child.children.length > 0) {
+        const sub = mk('div', 'subsection');
+        const subHead = mk('div', 'subsection-head');
+        subHead.textContent = child.title;
+        if ((child.resources||[]).length) {
+          const b = mk('button', 'step-res-badge');
+          b.type = 'button';
+          b.textContent = (child.resources||[]).length + ' res';
+          b.addEventListener('click', e => { e.stopPropagation(); openDrawer(child); });
+          subHead.appendChild(b);
+        }
+        sub.appendChild(subHead);
+        const row = mk('div', 'chip-row');
+        child.children.forEach(gc => {
+          const c1 = makeChip(gc, true); row.appendChild(c1); chips.push(c1);
+          (gc.children||[]).forEach(ggc => { const c2 = makeChip(ggc, true); row.appendChild(c2); chips.push(c2); });
+        });
+        sub.appendChild(row);
+        body.appendChild(sub);
+      } else {
+        if (!looseRow) { looseRow = mk('div', 'chip-row'); body.appendChild(looseRow); }
+        const c = makeChip(child); looseRow.appendChild(c); chips.push(c);
+      }
+    });
+  } else {
+    const row = mk('div', 'chip-row');
+    section.children.forEach(child => {
+      const c = makeChip(child); row.appendChild(c); chips.push(c);
+      (child.children||[]).forEach(sub => { const s = makeChip(sub, true); row.appendChild(s); chips.push(s); });
+    });
+    body.appendChild(row);
+  }
+
+  card.appendChild(body);
+  return { el: card, chips };
+}
+
+function makeChip(node, isSub = false) {
+  const el = mk('div', 'topic-chip' + (isSub ? ' sub' : '') + (node.completed ? ' done' : ''));
+  if (node.is_optional) el.classList.add('optional');
+
+  const check = mk('span', 'chip-check');
+  check.innerHTML = '<svg viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="#08130c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  check.title = node.completed ? 'Mark as not done' : 'Mark as done';
+  check.addEventListener('click', e => { e.stopPropagation(); toggleDone(node, el, check); });
+  el.appendChild(check);
+
+  const hasRes = (node.resources||[]).length > 0;
+  if (hasRes) el.appendChild(mk('span', 'chip-res-dot'));
+
+  const label = mk('span', 'chip-label');
+  label.textContent = node.title;
+  el.appendChild(label);
+  el.title = node.title + (hasRes ? ` · ${node.resources.length} resource${node.resources.length>1?'s':''}` : ' · click for resources');
+  el.addEventListener('click', () => openDrawer(node, el));
+
+  allChips.push({ el, node });
+  return el;
+}
+
+function svgChevron() {
+  const s = mk('span', 'step-chevron');
+  s.innerHTML = '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  return s;
+}
+
+function countLeaves(section) {
+  let n = 0;
+  (section.children || []).forEach(c => {
+    if (c.children && c.children.length) n += countLeaves(c);
+    else n += 1;
+  });
+  return n;
+}
+
+function drawTrail() {
+  const wrap = document.getElementById('trailWrap');
+  const svg  = document.getElementById('trailSvg');
+  const markers = [...document.querySelectorAll('.wp-marker')];
+  if (!wrap || !markers.length) return;
+
+  const wrapRect = wrap.getBoundingClientRect();
+  svg.setAttribute('width', wrapRect.width);
+  svg.setAttribute('height', wrapRect.height);
+  svg.setAttribute('viewBox', `0 0 ${wrapRect.width} ${wrapRect.height}`);
+
+  const pts = markers.map(m => {
+    const r = m.getBoundingClientRect();
+    return { x: r.left - wrapRect.left + r.width/2, y: r.top - wrapRect.top + r.height/2 };
+  });
+
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  segLens = [];
+  if (!scratchPath) {
+    scratchPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    scratchPath.style.visibility = 'hidden';
+    svg.appendChild(scratchPath);
+  }
+  for (let i = 1; i < pts.length; i++) {
+    const p0 = pts[i-1], p1 = pts[i];
+    const midY = (p0.y + p1.y) / 2;
+    const segD = `M ${p0.x} ${p0.y} C ${p0.x} ${midY}, ${p1.x} ${midY}, ${p1.x} ${p1.y}`;
+    d += ` C ${p0.x} ${midY}, ${p1.x} ${midY}, ${p1.x} ${p1.y}`;
+    scratchPath.setAttribute('d', segD);
+    segLens.push(scratchPath.getTotalLength());
+  }
+
+  const bg = document.getElementById('trailBg');
+  const fg = document.getElementById('trailFg');
+  bg.setAttribute('d', d);
+  fg.setAttribute('d', d);
+
+  trailLen = segLens.reduce((a, b) => a + b, 0);
+  updateTrailFill();
+}
+
+function updateTrailFill() {
+  const fg = document.getElementById('trailFg');
+  if (!fg || !trailLen) return;
+  let litLen = 0;
+  for (let i = 0; i < sectionMap.length; i++) {
+    if (i >= segLens.length) break;
+    const chips = sectionMap[i].chips;
+    const total = chips.length;
+    const done  = chips.filter(c => c.classList.contains('done')).length;
+    const frac  = total ? done / total : 1;
+    if (frac >= 1) { litLen += segLens[i]; }
+    else { litLen += segLens[i] * frac; break; }
+  }
+  fg.style.strokeDasharray = trailLen;
+  fg.style.strokeDashoffset = trailLen - litLen;
+}
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(drawTrail, 150);
+});
+
+/* Dashboard is already an authenticated-only page, so progress actions
+   don't need a login check the way the standalone roadmap page does. */
+async function toggleDone(node, el, checkEl) {
+  const newState = !node.completed;
+  node.completed = newState;
+  el.classList.toggle('done', newState);
+  if (checkEl) checkEl.title = newState ? 'Mark as not done' : 'Mark as done';
+  if (activeNode === node) syncDrawerMarkBtn();
+  updateAllProgress();
+
+  try {
+    const r = await fetch(`/api/v2/progress/${node.id}`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ completed: newState })
+    });
+    if (!r.ok) throw new Error('save failed');
+    if (newState) refreshCardBadges();
+  } catch (e) {
+    node.completed = !newState;
+    el.classList.toggle('done', !newState);
+    if (activeNode === node) syncDrawerMarkBtn();
+    updateAllProgress();
+    showToast('⚠️ Could not save progress — try again');
+  }
+}
+
+async function refreshCardBadges() {
+  try {
+    const r = await fetch('/api/v2/user/roadmaps');
+    if (!r.ok) return;
+    const d = await r.json();
+    (d.roadmaps || []).forEach(rm => {
+      const card = document.querySelector(`.rm-card[data-roadmap-id="${rm.id}"]`);
+      if (!card) return;
+      card.classList.toggle('primary', rm.is_primary);
+      const badge = card.querySelector('.rm-card-badge');
+      if (rm.is_primary && !badge) {
+        const top = card.querySelector('.rm-card-top');
+        const b = document.createElement('span');
+        b.className = 'rm-card-badge';
+        b.textContent = 'DEFAULT';
+        top.appendChild(b);
+      } else if (!rm.is_primary && badge) {
+        badge.remove();
+      }
+      card.querySelector('.rm-card-fill').style.width = rm.progress_pct + '%';
+      card.querySelector('.rm-card-pct').innerHTML = `<strong>${rm.progress_pct}%</strong> complete`;
+    });
+  } catch (e) { /* non-critical */ }
+}
+
+function updateAllProgress() {
+  const total = allChips.length;
+  const done  = allChips.filter(c => c.node.completed).length;
+  const pct   = total ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('progressLabel').textContent = `${done} / ${total} completed`;
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  let currentSet = false;
+  sectionMap.forEach(({ marker, chips }) => {
+    if (!chips.length) return;
+    const num = marker.dataset.num || (marker.dataset.num = marker.textContent);
+    const sectionDone = chips.every(c => c.classList.contains('done'));
+    const sectionPartial = !sectionDone && chips.some(c => c.classList.contains('done'));
+    marker.classList.toggle('done', sectionDone);
+    marker.classList.toggle('partial', sectionPartial);
+    marker.classList.remove('current');
+    if (sectionDone) {
+      marker.innerHTML = '<svg viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="#eafff1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    } else {
+      marker.textContent = num;
+      if (!currentSet) { marker.classList.add('current'); currentSet = true; }
+    }
+  });
+
+  updateTrailFill();
+}
+
+document.getElementById('progressResetBtn').addEventListener('click', async () => {
+  if (!CURRENT_SLUG) return;
+  if (!confirm('Clear all completed topics for this roadmap?')) return;
+  try {
+    await fetch(`/api/v2/roadmap/${CURRENT_SLUG}/reset-progress`, { method: 'POST' });
+    loadRoadmapInto(CURRENT_SLUG);
+    refreshCardBadges();
+  } catch (e) {
+    showToast('⚠️ Could not reset progress — try again');
+  }
+});
+
+async function openDrawer(node, el) {
+  if (activeChip) activeChip.classList.remove('active');
+  if (el) { el.classList.add('active'); activeChip = el; }
+  activeNode = node;
+
+  const backdrop = document.getElementById('resDrawerBackdrop');
+  const drawer   = document.getElementById('resDrawer');
+  const title    = document.getElementById('rpTitle');
+  const body     = document.getElementById('rpBody');
+
+  title.textContent = '📚 ' + node.title;
+  backdrop.classList.add('open');
+  drawer.classList.add('open');
+
+  const dbRes = node.resources || [];
+  let markBtnHtml = '';
+  if (el) {
+    const isDone = el.classList.contains('done');
+    markBtnHtml = `<button class="drawer-mark-btn ${isDone?'is-done':''}" id="drawerMarkBtn">
+        ${isDone ? '✓ Marked as done' : '○ Mark as done'}
+      </button>`;
+  }
+
+  if (dbRes.length > 0) {
+    body.innerHTML = markBtnHtml;
+    renderResources(body, dbRes, node.description || '');
+  } else {
+    body.innerHTML = `${markBtnHtml}
+      <div class="rp-desc">Fetching resources for <strong>${esc(node.title)}</strong> from roadmap.sh…</div>
+      <div class="rp-loading"><div class="mini-spin"></div> Loading…</div>`;
+    const scraped = await scrapeResources(node);
+    if (activeNode !== node) return;
+    body.innerHTML = markBtnHtml;
+    renderResources(body, scraped.resources, scraped.description || node.description || '');
+  }
+
+  if (el) {
+    const btn = document.getElementById('drawerMarkBtn');
+    if (btn) btn.addEventListener('click', () => toggleDone(node, el));
+  }
+}
+
+function syncDrawerMarkBtn() {
+  const btn = document.getElementById('drawerMarkBtn');
+  if (!btn || !activeChip) return;
+  const isDone = activeChip.classList.contains('done');
+  btn.classList.toggle('is-done', isDone);
+  btn.textContent = isDone ? '✓ Marked as done' : '○ Mark as done';
+}
+
+function closeDrawer() {
+  document.getElementById('resDrawerBackdrop').classList.remove('open');
+  document.getElementById('resDrawer').classList.remove('open');
+  if (activeChip) { activeChip.classList.remove('active'); activeChip = null; }
+  activeNode = null;
+}
+document.getElementById('resDrawerBackdrop').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+async function scrapeResources(node) {
+  const cacheKey = node.node_id || node.title;
+  if (fetchCache[cacheKey]) return fetchCache[cacheKey];
+  const topicSlug = (node.title || '').toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+  try {
+    const r = await fetch(`/api/v2/fetch-resources/${CURRENT_SLUG}/${topicSlug}`);
+    const d = await r.json();
+    fetchCache[cacheKey] = d;
+    return d;
+  } catch(e) { return { resources: [], description: '' }; }
+}
+
+function renderResources(body, resources, description) {
+  let h = '';
+  if (description) h += `<div class="rp-desc">${esc(description)}</div>`;
+
+  if (resources && resources.length > 0) {
+    h += '<div class="res-list">';
+    resources.forEach(r => {
+      const type = r.res_type || r.type || 'article';
+      const cls  = 'rt-' + type.toLowerCase().replace(/[^a-z]/g, '');
+      const dom  = (() => { try { return new URL(r.url).hostname.replace('www.',''); } catch { return ''; } })();
+      h += `<a href="${r.url}" target="_blank" rel="noopener" class="res-item">
+              <span class="rt ${cls}">${type.toUpperCase()}</span>
+              <span class="res-title">${esc(r.title)}</span>
+              <span class="res-domain">${dom} ↗</span>
+            </a>`;
+    });
+    h += '</div>';
+  } else {
+    const q = encodeURIComponent(document.getElementById('rpTitle').textContent.replace('📚 ',''));
+    h += `<div class="rp-desc" style="color:var(--text3)">No resources found in DB or on roadmap.sh for this topic.</div>
+          <div class="res-fallback">
+            <a href="https://www.youtube.com/results?search_query=${q}+tutorial" target="_blank" rel="noopener">
+              <span class="rt rt-video">VIDEO</span> YouTube — ${esc(decodeURIComponent(q))} tutorial
+            </a>
+            <a href="https://www.freecodecamp.org/news/search/?query=${q}" target="_blank" rel="noopener">
+              <span class="rt rt-article">ARTICLE</span> freeCodeCamp — ${esc(decodeURIComponent(q))}
+            </a>
+            <a href="https://developer.mozilla.org/en-US/search?q=${q}" target="_blank" rel="noopener">
+              <span class="rt rt-official">DOCS</span> MDN — ${esc(decodeURIComponent(q))}
+            </a>
+            <a href="https://www.google.com/search?q=${q}+tutorial" target="_blank" rel="noopener">
+              <span class="rt rt-article">SEARCH</span> Google — ${esc(decodeURIComponent(q))} tutorial
+            </a>
+          </div>`;
+  }
+
+  h += `<div class="rp-footer"><a href="https://roadmap.sh/${CURRENT_SLUG}" target="_blank" rel="noopener">View complete roadmap on roadmap.sh ↗</a></div>`;
+  body.insertAdjacentHTML('beforeend', h);
+}
+
+document.getElementById('rmSearch').addEventListener('input', function() {
+  const q = this.value.trim().toLowerCase();
+  let anyVisible = false;
+
+  document.querySelectorAll('.waypoint').forEach(wp => {
+    let hasMatch = !q;
+    wp.querySelectorAll('.topic-chip').forEach(chipEl => {
+      const label = chipEl.querySelector('.chip-label');
+      const text = label ? label.textContent.toLowerCase() : '';
+      const match = !q || text.includes(q);
+      chipEl.classList.toggle('filtered-out', !match);
+      if (match) hasMatch = true;
+    });
+    wp.querySelectorAll('.subsection').forEach(sub => {
+      const visibleChips = [...sub.querySelectorAll('.topic-chip')].some(c => !c.classList.contains('filtered-out'));
+      sub.classList.toggle('filtered-out', q && !visibleChips);
+    });
+    wp.classList.toggle('filtered-out', q && !hasMatch);
+    if (!q || hasMatch) anyVisible = true;
+    if (q && hasMatch) {
+      const card = wp.querySelector('.step-card');
+      if (card) card.classList.remove('collapsed');
+    }
+  });
+
+  document.getElementById('rmNoMatch').classList.toggle('show', q && !anyVisible);
+  requestAnimationFrame(drawTrail);
+});
+
+document.getElementById('collapseAllBtn').addEventListener('click', () => {
+  document.querySelectorAll('.step-card').forEach(c => c.classList.add('collapsed'));
+  requestAnimationFrame(drawTrail);
+});
+document.getElementById('expandAllBtn').addEventListener('click', () => {
+  document.querySelectorAll('.step-card').forEach(c => c.classList.remove('collapsed'));
+  requestAnimationFrame(drawTrail);
+});
+
+function mk(tag, cls) { const el = document.createElement(tag); if (cls) el.className = cls; return el; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* Boot: auto-select the DEFAULT roadmap (or the first card if none is
+   marked default) so the viewer isn't empty on page load. */
+(function boot() {
+  const cards = document.querySelectorAll('.rm-card');
+  if (!cards.length) return;
+  const defaultCard = document.querySelector('.rm-card.primary') || cards[0];
+  defaultCard.classList.add('selected');
+  loadRoadmapInto(defaultCard.dataset.slug, defaultCard.dataset.type);
+})();
+</script>
+{% endif %}
+{% endblock %}

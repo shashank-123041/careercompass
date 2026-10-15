@@ -1,0 +1,85 @@
+{
+  "model_type": "linear_svm",
+  "classes": [
+    "backend",
+    "blockchain",
+    "cyber-security",
+    "data-analyst",
+    "data-engineer",
+    "devops",
+    "devrel",
+    "devsecops",
+    "engineering-manager",
+    "frontend",
+    "full-stack",
+    "game-developer",
+    "ml-cluster",
+    "mlops",
+    "mobile",
+    "network-engineer",
+    "postgresql-dba",
+    "product-manager",
+    "qa",
+    "software-architect",
+    "technical-writer",
+    "ux-design"
+  ],
+  "confidence_threshold_default": 0.35,
+  "confidence_threshold_tier3": 0.55,
+  "tier3_roles": [
+    "devrel",
+    "devsecops",
+    "engineering-manager",
+    "mlops",
+    "network-engineer",
+    "postgresql-dba",
+    "software-architect",
+    "technical-writer",
+    "ux-design"
+  ],
+  "merged_label_map": {
+    "ml-cluster": [
+      "ai-engineer",
+      "ai-data-scientist",
+      "machine-learning"
+    ],
+    "mobile": [
+      "android",
+      "ios"
+    ]
+  },
+  "unroutable_role_slugs_no_data": [
+    "devops-engineer",
+    "server-side-game-developer"
+  ],
+  "text_feature": "skill_tags_text",
+  "cat_features": [
+    "degree_level",
+    "degree_field"
+  ],
+  "num_features": [
+    "years_experience"
+  ],
+  "n_training_rows": 2861,
+  "class_weighting_scheme": "sqrt_balanced",
+  "svm_config": {
+    "C": 1.0,
+    "max_features": 800,
+    "tokenizer": "default",
+    "calibration_method": "isotonic",
+    "calibration_cv": 3
+  },
+  "validated_via": [
+    "compare_model_architectures.py",
+    "svm_hyperparameter_search.py",
+    "per_class_comparison_svm_vs_catboost.py",
+    "per_class_calibration_check.py",
+    "calibration_method_comparison.py",
+    "confusion_pattern_parity_check.py",
+    "svm_diagnose_confusion_pair.py",
+    "tfidf_tokenization_check.py",
+    "atomic_vocab_size_check.py"
+  ],
+  "validated_macro_f1_5x3_repeated_cv": 0.917,
+  "validated_calibration_ece": 0.0675
+}

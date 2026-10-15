@@ -1,0 +1,5 @@
+scheme,macro_f1,backend_precision,backend_recall,backend_f1,small_classes_avg_f1
+none,0.651,0.798,0.863,0.83,0.469
+balanced,0.686,0.889,0.614,0.727,0.571
+sqrt_balanced,0.738,0.872,0.745,0.804,0.652
+capped_balanced,0.688,0.886,0.69,0.775,0.521

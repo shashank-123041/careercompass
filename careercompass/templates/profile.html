@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% block title %}Profile — CareerCompass{% endblock %}
+{% block extra_css %}
+.pf-wrap { max-width: 760px; margin: 0 auto; padding: 2rem 0 4rem; }
+.pf-head { margin-bottom: 2rem; }
+.pf-head h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: .3rem; }
+.pf-head p { color: var(--text3); font-size: .88rem; }
+
+.pf-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1.5rem 1.75rem; margin-bottom: 1.25rem;
+}
+.pf-section h2 {
+  font-size: .95rem; font-weight: 700; margin-bottom: 1.1rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.pf-section h2 .ic { font-size: 1rem; }
+
+/* Account */
+.pf-account-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.pf-avatar { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border2); flex-shrink: 0; }
+.pf-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pf-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--accent-dim); color: var(--accent); font-weight: 800; font-size: 1.3rem; font-family: var(--mono); }
+.pf-field { margin-bottom: 1rem; }
+.pf-field label { display: block; font-size: .74rem; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .4rem; }
+.pf-field .pf-static { font-size: .9rem; color: var(--text2); }
+.pf-inline-edit { display: flex; gap: .5rem; }
+.pf-inline-edit input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: .55rem .8rem; color: var(--text); font-size: .87rem; outline: none; }
+.pf-inline-edit input:focus { border-color: var(--accent); }
+.pf-btn { padding: .55rem 1rem; border-radius: 7px; font-size: .82rem; font-weight: 600; cursor: pointer; border: none; font-family: var(--font); transition: all .15s; }
+.pf-btn.primary { background: var(--accent); color: #000; }
+.pf-btn.primary:hover { background: var(--accent2); }
+.pf-btn.outline { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
+.pf-btn.outline:hover { color: var(--text); border-color: var(--accent); }
+.pf-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Password */
+.pf-pw-note { font-size: .82rem; color: var(--text3); line-height: 1.6; margin-bottom: 1rem; }
+.pf-pw-form { display: flex; flex-direction: column; gap: .7rem; max-width: 320px; }
+.pf-pw-form input { background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: .6rem .8rem; color: var(--text); font-size: .86rem; outline: none; }
+.pf-pw-form input:focus { border-color: var(--accent); }
+
+/* Skills */
+.pf-chip-group-head { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); font-family: var(--mono); margin: 1rem 0 .6rem; }
+.pf-chip-group-head:first-child { margin-top: 0; }
+.pf-chips { display: flex; flex-wrap: wrap; gap: .5rem; min-height: 2rem; }
+.pf-chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: .38rem .5rem .38rem .9rem; font-size: .82rem; display: flex; align-items: center; gap: 8px; }
+.pf-chip button { background: var(--surface2); border: none; color: var(--text3); cursor: pointer; font-size: .68rem; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.pf-chip button:hover { color: #ef4444; background: rgba(239,68,68,.12); }
+.pf-chip-empty { font-size: .8rem; color: var(--text3); font-style: italic; }
+.pf-chip-add { display: flex; gap: .5rem; margin-top: .9rem; }
+.pf-chip-add input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: .55rem .8rem; color: var(--text); font-size: .84rem; outline: none; }
+.pf-chip-add input:focus { border-color: var(--accent); }
+
+/* Roadmaps */
+.pf-rm-list { display: flex; flex-direction: column; gap: .5rem; }
+.pf-rm-item { display: flex; align-items: center; gap: .75rem; padding: .65rem .9rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 9px; text-decoration: none; color: inherit; transition: all .15s; }
+.pf-rm-item:hover { border-color: var(--border2); }
+.pf-rm-item .ic { font-size: 1.1rem; }
+.pf-rm-item .name { flex: 1; font-size: .87rem; font-weight: 600; }
+.pf-rm-item .pct { font-family: var(--mono); font-size: .78rem; color: var(--text3); }
+.pf-rm-item.done .pct { color: var(--green); }
+.pf-empty-note { font-size: .82rem; color: var(--text3); font-style: italic; }
+
+/* Resume */
+.pf-resume-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+.pf-resume-actions input[type=file] { display: none; }
+{% endblock %}
+
+{% block content %}
+<div class="pf-wrap">
+  <div class="pf-head">
+    <h1>Profile &amp; Settings</h1>
+    <p>Manage your account, skills, and roadmap progress.</p>
+  </div>
+
+  <!-- ACCOUNT -->
+  <div class="pf-section">
+    <h2><span class="ic">👤</span> Account</h2>
+    <div class="pf-account-row">
+      <div class="pf-avatar">
+        {% if user.avatar_url %}
+          <img src="{{ user.avatar_url }}" alt="">
+        {% else %}
+          <div class="pf-avatar-fallback">{{ (user.name or user.email or '?')[0]|upper }}</div>
+        {% endif %}
+      </div>
+      <div style="flex:1">
+        <div class="pf-field" style="margin-bottom:.3rem">
+          <label>Display name</label>
+          <div class="pf-inline-edit">
+            <input type="text" id="nameInput" value="{{ user.name or '' }}" placeholder="Add your name">
+            <button class="pf-btn primary" id="saveNameBtn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pf-field">
+      <label>Email</label>
+      <div class="pf-static">{{ user.email }}</div>
+    </div>
+  </div>
+
+  <!-- PASSWORD -->
+  <div class="pf-section">
+    <h2><span class="ic">🔒</span> Password</h2>
+    <div id="pwSection">
+      <p class="pf-pw-note">Loading account details…</p>
+    </div>
+  </div>
+
+  <!-- SKILLS POOL -->
+  <div class="pf-section">
+    <h2><span class="ic">🛠️</span> Skills Pool</h2>
+    <div class="pf-chip-group-head">Technical Skills</div>
+    <div class="pf-chips" id="techChips"></div>
+    <div class="pf-chip-group-head">Domain Knowledge</div>
+    <div class="pf-chips" id="domainChips"></div>
+    <div class="pf-chip-add">
+      <input type="text" id="newSkillInput" placeholder="Add a skill and press Enter">
+    </div>
+    <div style="margin-top:1rem">
+      <button class="pf-btn primary" id="saveSkillsBtn">Save Skills</button>
+    </div>
+  </div>
+
+  <!-- ROADMAPS -->
+  <div class="pf-section">
+    <h2><span class="ic">🧭</span> Completed Roadmaps</h2>
+    <div class="pf-rm-list">
+      {% for rm in completed_roadmaps %}
+      <a href="/roadmap/{{ rm.type }}/{{ rm.slug }}" class="pf-rm-item done">
+        <span class="ic">{{ rm.icon }}</span>
+        <span class="name">{{ rm.title }}</span>
+        <span class="pct">✓ 100%</span>
+      </a>
+      {% else %}
+      <div class="pf-empty-note">No roadmaps completed yet — keep going!</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="pf-section">
+    <h2><span class="ic">📍</span> In Progress</h2>
+    <div class="pf-rm-list">
+      {% for rm in in_progress_roadmaps %}
+      <a href="/roadmap/{{ rm.type }}/{{ rm.slug }}" class="pf-rm-item">
+        <span class="ic">{{ rm.icon }}</span>
+        <span class="name">{{ rm.title }}</span>
+        <span class="pct">{{ rm.progress_pct }}%</span>
+      </a>
+      {% else %}
+      <div class="pf-empty-note">Nothing in progress right now.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- RESUME -->
+  <div class="pf-section">
+    <h2><span class="ic">📄</span> Resume</h2>
+    <p class="pf-pw-note">
+      Re-upload your resume to re-extract skills (this replaces your current Skills Pool above after you review it).
+      Full resume editing/formatting isn't built yet — for now you can download a plain-text snapshot of your current skills.
+    </p>
+    <div class="pf-resume-actions">
+      <label class="pf-btn outline" for="resumeReupload">📤 Re-upload Resume</label>
+      <input type="file" id="resumeReupload" accept=".pdf,.jpg,.jpeg,.png">
+      <button class="pf-btn outline" id="downloadSummaryBtn">⬇️ Download Skills Summary (.txt)</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, EmailAuthProvider, GoogleAuthProvider,
+  reauthenticateWithCredential, reauthenticateWithPopup,
+  updatePassword, linkWithCredential, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// Same Firebase web config as login.html (public client config, not a secret).
+const firebaseConfig = {
+  apiKey: "AIzaSyDU_4-R3s9Ufyv2tZCvF9ZZrTXQ7yf059Q",
+  authDomain: "careercompass-dev-fbc26.firebaseapp.com",
+  projectId: "careercompass-dev-fbc26",
+  storageBucket: "careercompass-dev-fbc26.firebasestorage.app",
+  messagingSenderId: "355431277258",
+  appId: "1:355431277258:web:2e2f8315877a6fbdc30a33"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const pwSection = document.getElementById('pwSection');
+
+onAuthStateChanged(auth, (fbUser) => {
+  if (!fbUser) {
+    pwSection.innerHTML = `<p class="pf-pw-note">⚠️ Your browser session with Firebase has expired — <a href="/login" style="color:var(--accent)">sign in again</a> to manage your password.</p>`;
+    return;
+  }
+  const hasPassword = fbUser.providerData.some(p => p.providerId === 'password');
+  renderPasswordSection(fbUser, hasPassword);
+});
+
+function renderPasswordSection(fbUser, hasPassword) {
+  if (hasPassword) {
+    pwSection.innerHTML = `
+      <p class="pf-pw-note">Change your CareerCompass password.</p>
+      <form class="pf-pw-form" id="pwForm">
+        <input type="password" id="currentPw" placeholder="Current password" required autocomplete="current-password">
+        <input type="password" id="newPw" placeholder="New password (6+ characters)" required minlength="6" autocomplete="new-password">
+        <button type="submit" class="pf-btn primary" id="pwSubmitBtn">Update Password</button>
+      </form>`;
+    document.getElementById('pwForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('pwSubmitBtn');
+      btn.disabled = true; btn.textContent = 'Updating…';
+      try {
+        const cred = EmailAuthProvider.credential(fbUser.email, document.getElementById('currentPw').value);
+        await reauthenticateWithCredential(fbUser, cred);
+        await updatePassword(fbUser, document.getElementById('newPw').value);
+        showToast('✅ Password updated');
+        document.getElementById('pwForm').reset();
+      } catch (err) {
+        showToast('⚠️ ' + friendlyPwError(err));
+      } finally {
+        btn.disabled = false; btn.textContent = 'Update Password';
+      }
+    });
+  } else {
+    pwSection.innerHTML = `
+      <p class="pf-pw-note">You signed in with Google, so there's no password yet. Set one below to also be able to sign in with email + password — both will link to this same account.</p>
+      <form class="pf-pw-form" id="pwForm">
+        <input type="password" id="newPw" placeholder="New password (6+ characters)" required minlength="6" autocomplete="new-password">
+        <button type="submit" class="pf-btn primary" id="pwSubmitBtn">Set Password</button>
+      </form>`;
+    document.getElementById('pwForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('pwSubmitBtn');
+      btn.disabled = true; btn.textContent = 'Setting…';
+      try {
+        // Setting a password on a Google-only account requires a fresh
+        // Google re-auth first (Firebase's security requirement for any
+        // sensitive account change), THEN link the new email/password
+        // credential to the same account.
+        await reauthenticateWithPopup(fbUser, new GoogleAuthProvider());
+        const cred = EmailAuthProvider.credential(fbUser.email, document.getElementById('newPw').value);
+        await linkWithCredential(fbUser, cred);
+        showToast('✅ Password set — you can now sign in with email too');
+        renderPasswordSection(fbUser, true);
+      } catch (err) {
+        showToast('⚠️ ' + friendlyPwError(err));
+      } finally {
+        btn.disabled = false; btn.textContent = 'Set Password';
+      }
+    });
+  }
+}
+
+function friendlyPwError(e) {
+  const map = {
+    'auth/wrong-password': 'Current password is incorrect.',
+    'auth/weak-password': 'Password should be at least 6 characters.',
+    'auth/requires-recent-login': 'For security, please sign out and back in, then try again.',
+    'auth/popup-closed-by-user': 'Re-authentication was cancelled.',
+    'auth/credential-already-in-use': 'That account is already linked elsewhere.',
+  };
+  return map[e.code] || e.message || 'Something went wrong.';
+}
+</script>
+
+<script>
+/* ── Display name ── */
+document.getElementById('saveNameBtn').addEventListener('click', async () => {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) return showToast('⚠️ Name cannot be empty');
+  try {
+    const r = await fetch('/profile/update-name', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ name })
+    });
+    if (!r.ok) throw new Error();
+    showToast('✅ Name updated');
+  } catch (e) {
+    showToast('⚠️ Could not update name');
+  }
+});
+
+/* ── Skills pool ── */
+let currentSkills = {{ user.resume_skills | tojson }};
+if (!currentSkills || !currentSkills.skills) {
+  currentSkills = { skills: { technical: {}, domain_knowledge: {} }, all_skills_flat: [] };
+}
+
+function renderChips() {
+  const tech = currentSkills.skills?.technical || {};
+  const domain = currentSkills.skills?.domain_knowledge || {};
+  const techBox = document.getElementById('techChips');
+  const domainBox = document.getElementById('domainChips');
+  techBox.innerHTML = '';
+  domainBox.innerHTML = '';
+
+  const flatTech = [];
+  Object.entries(tech).forEach(([k, subs]) => {
+    flatTech.push(k);
+    (subs || []).forEach(s => flatTech.push(s));
+  });
+  if (flatTech.length) flatTech.forEach(s => techBox.appendChild(makeChip(s)));
+  else techBox.innerHTML = '<div class="pf-chip-empty">No technical skills yet</div>';
+
+  const domainKeys = Object.keys(domain);
+  if (domainKeys.length) domainKeys.forEach(s => domainBox.appendChild(makeChip(s)));
+  else domainBox.innerHTML = '<div class="pf-chip-empty">No domain knowledge yet</div>';
+}
+
+function makeChip(label) {
+  const el = document.createElement('div');
+  el.className = 'pf-chip';
+  el.innerHTML = `<span>${esc(label)}</span><button type="button">✕</button>`;
+  el.querySelector('button').addEventListener('click', () => removeSkill(label));
+  return el;
+}
+
+function removeSkill(label) {
+  const tech = currentSkills.skills.technical;
+  delete tech[label];
+  Object.keys(tech).forEach(k => { if (tech[k]) tech[k] = tech[k].filter(s => s !== label); });
+  delete currentSkills.skills.domain_knowledge[label];
+  currentSkills.all_skills_flat = (currentSkills.all_skills_flat || []).filter(s => s !== label);
+  renderChips();
+}
+
+document.getElementById('newSkillInput').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || !e.target.value.trim()) return;
+  const val = e.target.value.trim();
+  currentSkills.skills.technical[val] = null;
+  currentSkills.all_skills_flat = currentSkills.all_skills_flat || [];
+  currentSkills.all_skills_flat.push(val);
+  renderChips();
+  e.target.value = '';
+});
+
+document.getElementById('saveSkillsBtn').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/onboarding/confirm-skills', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ skills: currentSkills })
+    });
+    if (!r.ok) throw new Error();
+    showToast('✅ Skills saved');
+  } catch (e) {
+    showToast('⚠️ Could not save skills');
+  }
+});
+
+renderChips();
+
+/* ── Resume re-upload ── */
+document.getElementById('resumeReupload').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  showToast('⏳ Parsing resume…');
+  const fd = new FormData();
+  fd.append('resume', file);
+  try {
+    const r = await fetch('/onboarding/parse-resume', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Parsing failed');
+    currentSkills = d.skills;
+    renderChips();
+    showToast('✅ Resume parsed — review and click Save Skills below');
+  } catch (err) {
+    showToast('⚠️ ' + err.message);
+  }
+});
+
+/* ── Skills summary download (plain text, not a formatted resume) ── */
+document.getElementById('downloadSummaryBtn').addEventListener('click', () => {
+  const tech = currentSkills.skills?.technical || {};
+  const domain = currentSkills.skills?.domain_knowledge || {};
+  let text = `CareerCompass Skills Summary\n`;
+  text += `Generated: ${new Date().toLocaleDateString()}\n\n`;
+  text += `TECHNICAL SKILLS\n${'-'.repeat(20)}\n`;
+  Object.entries(tech).forEach(([k, subs]) => {
+    text += `- ${k}${subs && subs.length ? ' (' + subs.join(', ') + ')' : ''}\n`;
+  });
+  text += `\nDOMAIN KNOWLEDGE\n${'-'.repeat(20)}\n`;
+  Object.keys(domain).forEach(k => { text += `- ${k}\n`; });
+
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'careercompass-skills-summary.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+{% endblock %}

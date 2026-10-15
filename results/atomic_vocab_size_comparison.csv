@@ -1,0 +1,4 @@
+max_features,mean_vocab_size,macro_f1_mean,macro_f1_std,product-manager_to_engineering-manager_count,product-manager_to_engineering-manager_rate
+1200,1036.0,0.8982,0.0112,6,0.05
+2000,1036.0,0.8982,0.0112,6,0.05
+uncapped,1036.0,0.8982,0.0112,6,0.05

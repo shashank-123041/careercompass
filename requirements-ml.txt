@@ -1,0 +1,5 @@
+# Extra dependencies for training / experiments / data-building scripts and
+# the CatBoost rollback path. Install on top of requirements.txt:
+#   pip install -r requirements.txt -r requirements-ml.txt
+catboost==1.2.10
+google-genai>=1.0.0     # Gemini calls in scripts/data_building/*

@@ -1,0 +1,3 @@
+tokenizer,macro_f1_mean,macro_f1_std,mean_vocab_size,max_features_cap,vocab_cap_binding,product-manager_to_engineering-manager_count,product-manager_to_engineering-manager_rate
+default,0.9129,0.0095,800.0,800,True,14,0.1167
+atomic,0.8927,0.0114,800.0,800,True,7,0.0583

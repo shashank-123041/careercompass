@@ -1,0 +1,475 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block extra_css %}
+.page-head{padding:2.5rem 0 2rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.page-head h1{font-size:2rem;font-weight:800;letter-spacing:-.03em}
+.page-head p{color:var(--text3);font-size:.9rem;margin-top:.4rem}
+.mode-badge{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:.45rem 1rem;font-size:.82rem;font-family:var(--mono);margin-top:.75rem}
+.mode-local{background:var(--green-dim);border:1px solid rgba(34,197,94,.25);color:var(--green)}
+.mode-remote{background:var(--blue-dim);border:1px solid rgba(59,130,246,.25);color:var(--blue)}
+.actions{display:flex;gap:.75rem;margin-bottom:2rem;flex-wrap:wrap}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem}
+.sc .big{font-size:2.2rem;font-weight:800;letter-spacing:-.03em;color:var(--accent)}
+.sc .lbl{font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.5rem}
+.ph{padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.ph h2{font-size:.95rem;font-weight:700}
+.pb{padding:1.5rem}
+.live-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+.pbar-wrap{background:var(--border);border-radius:3px;height:6px;overflow:hidden;margin-top:.75rem}
+.pbar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 1s}
+.sp{font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:20px;font-family:var(--mono);letter-spacing:.05em;white-space:nowrap}
+.sp-running{background:rgba(245,158,11,.15);color:var(--accent)}
+.sp-success{background:var(--green-dim);color:var(--green)}
+.sp-failed{background:rgba(239,68,68,.12);color:#ef4444}
+.sp-partial{background:var(--blue-dim);color:var(--blue)}
+.sp-idle{background:var(--surface2);color:var(--text3)}
+.ht{width:100%;border-collapse:collapse;font-size:.83rem}
+.ht th{text-align:left;color:var(--text3);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;padding:.5rem 0;border-bottom:1px solid var(--border)}
+.ht td{padding:.55rem 0;border-bottom:1px solid var(--border);vertical-align:middle}
+.ht tr:last-child td{border-bottom:none}
+.mn{font-family:var(--mono);font-size:.78rem;color:var(--text3)}
+.pf-wrap{display:flex;gap:.4rem;align-items:center}
+.pf-bar{height:6px;background:var(--green);border-radius:3px;min-width:2px}
+.pf-bg{height:6px;background:var(--border);border-radius:3px;flex:1}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:var(--radius);padding:1rem 1.25rem;font-size:.85rem;color:var(--accent2);line-height:1.6;margin-bottom:1.5rem}
+.warn-box code{background:var(--bg3);padding:.1rem .4rem;border-radius:4px;font-family:var(--mono);font-size:.8rem}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>⚙️ Sync Dashboard</h1>
+  <p>Knowledge base health and sync control</p>
+  <div class="mode-badge {% if mode == 'local' %}mode-local{% else %}mode-remote{% endif %}">
+    {% if mode == 'local' %}✅ LOCAL — reading from cloned repo{% else %}🌐 REMOTE — GitHub API{% endif %}
+  </div>
+  {% if mode == 'local' and repo_path %}
+  <div style="font-family:var(--mono);font-size:.78rem;color:var(--text3);margin-top:.5rem">
+    📁 {{ repo_path }}/src/data/roadmaps/
+  </div>
+  {% endif %}
+</div>
+
+{% if mode != 'local' and not stats.total %}
+<div class="warn-box">
+  ⚠️ <strong>ROADMAP_REPO_PATH is not set.</strong>
+  For fastest results, clone the repo and set the path in <code>.env</code>:<br><br>
+  <code>git clone https://github.com/nilbuild/developer-roadmap.git</code><br>
+  Then in <code>.env</code>: <code>ROADMAP_REPO_PATH=/path/to/developer-roadmap</code><br><br>
+  Run <code>python diagnose.py</code> to verify your setup before syncing.
+</div>
+{% endif %}
+
+<div class="actions">
+  <button class="btn btn-primary" id="syncBtn" onclick="triggerSync()">🔄 Trigger Sync Now</button>
+  <a href="/" class="btn btn-outline">← Home</a>
+  <a href="/roles" class="btn btn-outline">🗺️ Roles</a>
+  <a href="/skills" class="btn btn-outline">⚡ Skills</a>
+</div>
+
+<!-- Live sync state -->
+<div class="panel">
+  <div class="ph"><h2>Live Sync State</h2><span class="sp sp-idle" id="livePill">IDLE</span></div>
+  <div class="pb">
+    <div class="live-box" id="liveRunning" style="display:none">
+      <div style="font-weight:700;font-size:.95rem;margin-bottom:.4rem">
+        Syncing: <span id="liveCurrent" style="color:var(--accent)">—</span>
+        <span class="mn" style="margin-left:.5rem" id="liveMode"></span>
+      </div>
+      <div class="mn">Progress: <span id="livePct">0</span>% · <span id="liveDone">0</span>/<span id="liveTotal">0</span></div>
+      <div class="pbar-wrap"><div class="pbar-fill" id="liveBar" style="width:0%"></div></div>
+    </div>
+    <div id="liveIdle" style="font-size:.85rem;color:var(--text3)">
+      No sync running · Last status: <strong id="lastStatus">{{ sync.last_status or 'never' }}</strong>
+      <span class="mn" style="margin-left:.75rem">{{ sync.last_completed or '' }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- KB stats -->
+<div class="stats-grid">
+  <div class="sc"><div class="big">{{ stats.total }}</div><div class="lbl">Roadmaps</div></div>
+  <div class="sc"><div class="big">{{ stats.roles }}</div><div class="lbl">Role Paths</div></div>
+  <div class="sc"><div class="big">{{ stats.skills }}</div><div class="lbl">Skill Paths</div></div>
+  <div class="sc"><div class="big">{{ stats.topics }}</div><div class="lbl">Topics</div></div>
+  <div class="sc"><div class="big">{{ stats.resources }}</div><div class="lbl">Resources</div></div>
+  <div class="sc"><div class="big">{{ stats.synced }}/{{ stats.total }}</div><div class="lbl">Synced</div></div>
+</div>
+
+<!-- Per-roadmap table -->
+<div class="panel">
+  <div class="ph">
+    <h2>Roadmap Status</h2>
+    <span class="mn" id="rmTableCount"></span>
+    <input id="rmFilter" type="text" placeholder="filter…"
+           style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.3rem .7rem;color:var(--text);font-size:.82rem;width:160px;outline:none">
+  </div>
+  <div style="overflow-x:auto">
+    <table class="ht" style="padding:0 1.5rem" id="rmTable">
+      <thead>
+        <tr style="padding:0 1.5rem">
+          <th style="padding-left:1.5rem">Slug</th>
+          <th>Type</th>
+          <th>Topics</th>
+          <th>Resources</th>
+          <th>Last synced</th>
+          <th style="padding-right:1.5rem">Action</th>
+        </tr>
+      </thead>
+      <tbody id="rmBody">
+        <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3)">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Sync history -->
+<div class="panel">
+  <div class="ph"><h2>Sync History</h2></div>
+  <div class="pb">
+    <table class="ht">
+      <thead><tr><th>Started</th><th>Trigger</th><th>Mode</th><th>Status</th><th>Found</th><th>Topics+</th><th>Resources+</th><th>Error</th></tr></thead>
+      <tbody>
+        {% for h in history %}
+        <tr>
+          <td class="mn">{{ h.started_at[:16] if h.started_at else '—' }}</td>
+          <td><span class="sp" style="background:var(--surface2);color:var(--text2)">{{ h.trigger|upper }}</span></td>
+          <td><span class="mn">{{ h.mode or 'local' }}</span></td>
+          <td><span class="sp sp-{{ h.status }}">{{ h.status|upper }}</span></td>
+          <td>{{ h.roadmaps_found }}</td>
+          <td>{{ h.topics_added }}</td>
+          <td>{{ h.resources_added }}</td>
+          <td style="color:#ef4444;font-size:.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis">{{ h.error_message or '' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No sync history — click "Trigger Sync Now"</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     OPPORTUNITY FINDER DASHBOARD
+     Separate scheduler, separate history table —
+     mirrors the roadmap panels above but reads from
+     /api/v2/opportunities/* instead of /api/v2/*
+════════════════════════════════════════════════ -->
+<div class="page-head" style="padding-top:1rem">
+  <h1>🎯 Opportunity Finder Sync</h1>
+  <p>Hackathons, internships, jobs, tech fests &amp; workshops — scraped on a 6-hour cycle</p>
+</div>
+
+<div class="actions">
+  <button class="btn btn-primary" id="oppSyncBtn" onclick="triggerOppSync()">🎯 Trigger Opportunity Sync</button>
+  <a href="/opportunities" class="btn btn-outline">🔗 View Opportunities Page</a>
+</div>
+
+<!-- Live opportunity sync state -->
+<div class="panel">
+  <div class="ph"><h2>Live Sync State</h2><span class="sp sp-idle" id="oppLivePill">IDLE</span></div>
+  <div class="pb">
+    <div class="live-box" id="oppLiveRunning" style="display:none">
+      <div style="font-weight:700;font-size:.95rem;margin-bottom:.4rem">
+        Scraping: <span id="oppLiveCurrent" style="color:var(--accent)">—</span>
+      </div>
+      <div class="mn">Source <span id="oppLiveDone">0</span>/<span id="oppLiveTotal">0</span></div>
+      <div class="pbar-wrap"><div class="pbar-fill" id="oppLiveBar" style="width:0%"></div></div>
+    </div>
+    <div id="oppLiveIdle" style="font-size:.85rem;color:var(--text3)">
+      No sync running · Last status: <strong id="oppLastStatus">never</strong>
+      <span class="mn" style="margin-left:.75rem" id="oppLastCompleted"></span>
+    </div>
+    <div class="warn-box" id="oppFallbackNote" style="display:none;margin:.9rem 0 0">
+      ⚠️ Last run used curated fallback data for: <strong id="oppFallbackList"></strong> — live sources for those were unreachable.
+    </div>
+  </div>
+</div>
+
+<!-- Opportunity stats -->
+<div class="stats-grid" id="oppStatsGrid">
+  <div class="sc"><div class="big" id="oppStatTotal">—</div><div class="lbl">Total Listings</div></div>
+  <div class="sc"><div class="big" id="oppStatHackathon">—</div><div class="lbl">Hackathons</div></div>
+  <div class="sc"><div class="big" id="oppStatInternship">—</div><div class="lbl">Internships</div></div>
+  <div class="sc"><div class="big" id="oppStatJob">—</div><div class="lbl">Jobs</div></div>
+  <div class="sc"><div class="big" id="oppStatTechfest">—</div><div class="lbl">Tech Fests</div></div>
+  <div class="sc"><div class="big" id="oppStatWorkshop">—</div><div class="lbl">Workshops</div></div>
+  <div class="sc"><div class="big" id="oppStatFallback">—</div><div class="lbl">Fallback Rows</div></div>
+</div>
+
+<!-- Per-source table -->
+<div class="panel">
+  <div class="ph"><h2>Source Status</h2><span class="mn" id="oppSourceCount"></span></div>
+  <div style="overflow-x:auto">
+    <table class="ht" style="padding:0 1.5rem" id="oppSourceTable">
+      <thead>
+        <tr>
+          <th style="padding-left:1.5rem">Source</th>
+          <th>Total Listings</th>
+          <th>Fallback Rows</th>
+          <th style="padding-right:1.5rem">Last Scraped</th>
+        </tr>
+      </thead>
+      <tbody id="oppSourceBody">
+        <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text3)">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Opportunity sync history -->
+<div class="panel">
+  <div class="ph"><h2>Sync History</h2></div>
+  <div class="pb">
+    <table class="ht">
+      <thead>
+        <tr>
+          <th>Started</th><th>Trigger</th><th>Status</th><th>Fetched</th>
+          <th>Upserted</th><th>Pruned</th><th>Fallback Used For</th><th>Error</th>
+        </tr>
+      </thead>
+      <tbody id="oppHistoryBody">
+        <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let poll = null;
+
+async function triggerSync() {
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true; btn.textContent = '⏳ Starting…';
+  try {
+    const r = await fetch('/api/v2/sync/trigger', {method:'POST'});
+    const d = await r.json();
+    showToast(d.status === 'started' ? '✅ Sync started!' : '⚠️ ' + d.status);
+    if (d.status === 'started') startPoll();
+  } catch(e) { showToast('Error: ' + e.message); }
+  setTimeout(() => { btn.disabled=false; btn.textContent='🔄 Trigger Sync Now'; }, 3000);
+}
+
+async function pollState() {
+  try {
+    const d = await (await fetch('/api/v2/sync/status')).json();
+    const live = d.live || {};
+    const pill = document.getElementById('livePill');
+    if (live.running) {
+      pill.textContent = 'RUNNING'; pill.className = 'sp sp-running';
+      document.getElementById('liveRunning').style.display = '';
+      document.getElementById('liveIdle').style.display = 'none';
+      document.getElementById('liveCurrent').textContent = live.current || '…';
+      document.getElementById('liveMode').textContent = '(' + (live.mode||'') + ')';
+      document.getElementById('livePct').textContent  = live.progress || 0;
+      document.getElementById('liveDone').textContent = live.done || 0;
+      document.getElementById('liveTotal').textContent= live.total || 0;
+      document.getElementById('liveBar').style.width  = (live.progress||0) + '%';
+    } else {
+      const s = live.last_status || 'idle';
+      pill.textContent = s.toUpperCase(); pill.className = 'sp sp-' + s;
+      document.getElementById('liveRunning').style.display = 'none';
+      document.getElementById('liveIdle').style.display = '';
+      document.getElementById('lastStatus').textContent = s;
+      if (poll) { clearInterval(poll); poll = null; loadRmTable(); }
+    }
+  } catch(e) {}
+}
+
+function startPoll() { if (!poll) poll = setInterval(pollState, 2000); }
+{% if sync.running %}startPoll();{% endif %}
+pollState();
+
+// Per-roadmap table
+async function loadRmTable() {
+  try {
+    const d = await (await fetch('/api/v2/admin/roadmaps')).json();
+    const rows = d.roadmaps || [];
+    document.getElementById('rmTableCount').textContent = rows.length + ' roadmaps';
+    const tbody = document.getElementById('rmBody');
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3)">No roadmaps in DB yet — trigger a sync first</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => {
+      const hasTopics = r.topic_count > 0;
+      const pct = r.node_count > 0 ? Math.round(r.topic_count / r.node_count * 100) : (hasTopics ? 100 : 0);
+      const syncedAt = r.last_synced_at ? r.last_synced_at.slice(0,16) : '—';
+      const typeCls  = r.type === 'role' ? 'sp-running' : 'sp-partial';
+      return `<tr data-slug="${r.slug}" data-title="${r.title.toLowerCase()}">
+        <td style="padding-left:1.5rem">
+          <a href="/roadmap/${r.type}/${r.slug}" style="color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:.8rem">${r.slug}</a>
+          <div style="font-size:.75rem;color:var(--text3)">${r.title}</div>
+        </td>
+        <td><span class="sp ${typeCls}">${r.type.toUpperCase()}</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <span style="font-family:var(--mono);font-size:.82rem;color:${hasTopics?'var(--green)':'var(--text3)'}">${r.topic_count}</span>
+            <div style="flex:1;height:5px;background:var(--border);border-radius:3px;min-width:40px">
+              <div style="height:100%;width:${Math.min(pct,100)}%;background:${hasTopics?'var(--green)':'var(--border2)'};border-radius:3px"></div>
+            </div>
+          </div>
+        </td>
+        <td class="mn">${r.node_count || 0}</td>
+        <td class="mn">${syncedAt}</td>
+        <td style="padding-right:1.5rem">
+          <a href="/roadmap/${r.type}/${r.slug}" style="color:var(--text3);font-size:.78rem;text-decoration:none">View →</a>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('rmBody').innerHTML =
+      '<tr><td colspan="6" style="color:#ef4444;padding:1rem 1.5rem">Failed to load: ' + e.message + '</td></tr>';
+  }
+}
+
+// Filter
+document.getElementById('rmFilter').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#rmBody tr[data-slug]').forEach(tr => {
+    const match = !q || tr.dataset.slug.includes(q) || (tr.dataset.title||'').includes(q);
+    tr.style.display = match ? '' : 'none';
+  });
+});
+
+loadRmTable();
+
+// ══════════════════════════════════════════════
+// OPPORTUNITY FINDER DASHBOARD
+// ══════════════════════════════════════════════
+let oppPoll = null;
+
+async function triggerOppSync() {
+  const btn = document.getElementById('oppSyncBtn');
+  btn.disabled = true; btn.textContent = '⏳ Starting…';
+  try {
+    const r = await fetch('/api/v2/opportunities/sync/trigger', {method:'POST'});
+    const d = await r.json();
+    showToast(d.status === 'started' ? '✅ Opportunity sync started!' : '⚠️ ' + d.status);
+    if (d.status === 'started') startOppPoll();
+  } catch(e) { showToast('Error: ' + e.message); }
+  setTimeout(() => { btn.disabled=false; btn.textContent='🎯 Trigger Opportunity Sync'; }, 3000);
+}
+
+async function pollOppState() {
+  try {
+    const d = await (await fetch('/api/v2/opportunities/sync/status')).json();
+    const live = d.live || {};
+    const pill = document.getElementById('oppLivePill');
+
+    if (live.running) {
+      pill.textContent = 'RUNNING'; pill.className = 'sp sp-running';
+      document.getElementById('oppLiveRunning').style.display = '';
+      document.getElementById('oppLiveIdle').style.display = 'none';
+      document.getElementById('oppLiveCurrent').textContent = live.current_source || '…';
+      document.getElementById('oppLiveDone').textContent = live.sources_done || 0;
+      document.getElementById('oppLiveTotal').textContent = live.sources_total || 0;
+      const pct = live.sources_total ? Math.round((live.sources_done / live.sources_total) * 100) : 0;
+      document.getElementById('oppLiveBar').style.width = pct + '%';
+    } else {
+      const s = live.last_status || 'idle';
+      pill.textContent = s.toUpperCase(); pill.className = 'sp sp-' + s;
+      document.getElementById('oppLiveRunning').style.display = 'none';
+      document.getElementById('oppLiveIdle').style.display = '';
+      document.getElementById('oppLastStatus').textContent = s;
+      document.getElementById('oppLastCompleted').textContent = live.last_completed || '';
+
+      const fb = live.last_fallback_sources || [];
+      const note = document.getElementById('oppFallbackNote');
+      if (fb.length) {
+        note.style.display = '';
+        document.getElementById('oppFallbackList').textContent = fb.join(', ');
+      } else {
+        note.style.display = 'none';
+      }
+
+      if (oppPoll) { clearInterval(oppPoll); oppPoll = null; loadOppStats(); loadOppSources(); loadOppHistory(); }
+    }
+  } catch(e) {}
+}
+
+function startOppPoll() { if (!oppPoll) oppPoll = setInterval(pollOppState, 2000); }
+pollOppState();
+
+async function loadOppStats() {
+  try {
+    const d = await (await fetch('/api/v2/opportunities/stats')).json();
+    document.getElementById('oppStatTotal').textContent      = d.total ?? 0;
+    document.getElementById('oppStatHackathon').textContent  = (d.by_type || {}).hackathon || 0;
+    document.getElementById('oppStatInternship').textContent = (d.by_type || {}).internship || 0;
+    document.getElementById('oppStatJob').textContent        = (d.by_type || {}).job || 0;
+    document.getElementById('oppStatTechfest').textContent   = (d.by_type || {}).techfest || 0;
+    document.getElementById('oppStatWorkshop').textContent   = (d.by_type || {}).workshop || 0;
+    document.getElementById('oppStatFallback').textContent   = d.fallback_count ?? 0;
+  } catch(e) {}
+}
+
+async function loadOppSources() {
+  try {
+    const d = await (await fetch('/api/v2/opportunities/admin/sources')).json();
+    const rows = d.sources || [];
+    document.getElementById('oppSourceCount').textContent = rows.length + ' sources';
+    const tbody = document.getElementById('oppSourceBody');
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text3)">No opportunities in DB yet — trigger a sync first</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => {
+      const lastScraped = r.last_scraped_at ? r.last_scraped_at.slice(0,16) : '—';
+      const fbCount = r.fallback_count || 0;
+      return `<tr>
+        <td style="padding-left:1.5rem;font-weight:600">${r.source}</td>
+        <td class="mn">${r.total}</td>
+        <td class="mn" style="color:${fbCount > 0 ? 'var(--accent)' : 'var(--text3)'}">${fbCount}</td>
+        <td class="mn" style="padding-right:1.5rem">${lastScraped}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('oppSourceBody').innerHTML =
+      '<tr><td colspan="4" style="color:#ef4444;padding:1rem 1.5rem">Failed to load: ' + e.message + '</td></tr>';
+  }
+}
+
+async function loadOppHistory() {
+  try {
+    const d = await (await fetch('/api/v2/opportunities/sync/history?limit=15')).json();
+    const rows = d.history || [];
+    const tbody = document.getElementById('oppHistoryBody');
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No sync history — click "Trigger Opportunity Sync"</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(h => {
+      const fb = (h.fallback_sources || []);
+      const fbText = fb.length ? fb.join(', ') : '—';
+      return `<tr>
+        <td class="mn">${h.started_at ? h.started_at.slice(0,16) : '—'}</td>
+        <td><span class="sp" style="background:var(--surface2);color:var(--text2)">${(h.trigger||'').toUpperCase()}</span></td>
+        <td><span class="sp sp-${h.status}">${(h.status||'').toUpperCase()}</span></td>
+        <td>${h.total_fetched ?? 0}</td>
+        <td>${h.total_upserted ?? 0}</td>
+        <td class="mn">${(h.pruned_expired||0) + (h.pruned_stale||0)}</td>
+        <td class="mn" style="color:${fb.length ? 'var(--accent)' : 'var(--text3)'}">${fbText}</td>
+        <td style="color:#ef4444;font-size:.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis">${h.error_message || ''}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('oppHistoryBody').innerHTML =
+      '<tr><td colspan="8" style="color:#ef4444;padding:1rem 1.5rem">Failed to load: ' + e.message + '</td></tr>';
+  }
+}
+
+loadOppStats();
+loadOppSources();
+loadOppHistory();
+</script>
+{% endblock %}

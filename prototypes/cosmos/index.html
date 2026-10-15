@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>COSMOS</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: "Courier New", monospace;
+        }
+
+        #app {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            overflow: hidden;
+        }
+
+        /* =========================================
+           THREE.JS CANVAS
+        ========================================= */
+
+        #globe-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #globe-container canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* CSS-based bloom glow overlay */
+        #bloom-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            filter: blur(12px) brightness(1.4);
+            opacity: 0.45;
+        }
+
+        #bloom-overlay canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* =========================================
+           LEFT DARK GRADIENT
+        ========================================= */
+
+        .left-gradient {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(0, 0, 0, 0.98) 0%,
+                    rgba(0, 0, 0, 0.92) 18%,
+                    rgba(0, 0, 0, 0.65) 35%,
+                    rgba(0, 0, 0, 0.15) 58%,
+                    transparent 75%
+                );
+        }
+
+        /* =========================================
+           VIGNETTE
+        ========================================= */
+
+        .vignette {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            pointer-events: none;
+
+            box-shadow:
+                inset 0 0 180px rgba(0, 0, 0, 0.95);
+        }
+
+        /* =========================================
+           CONTENT
+        ========================================= */
+
+        .content {
+            position: absolute;
+
+            left: 8%;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 420px;
+
+            z-index: 10;
+
+            color: white;
+        }
+
+        .eyebrow {
+            color: #00eaff;
+
+            font-size: 12px;
+
+            letter-spacing: 5px;
+
+            margin-bottom: 22px;
+        }
+
+        h1 {
+            font-size: clamp(55px, 6vw, 90px);
+
+            line-height: 0.9;
+
+            letter-spacing: -5px;
+
+            font-weight: 700;
+        }
+
+        h1 span {
+            color: #00eaff;
+
+            text-shadow:
+                0 0 30px rgba(0, 234, 255, 0.35);
+        }
+
+        .description {
+            margin-top: 30px;
+
+            width: 390px;
+
+            font-family: Arial, sans-serif;
+
+            font-size: 15px;
+
+            line-height: 1.7;
+
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .button {
+            margin-top: 32px;
+
+            padding: 14px 22px;
+
+            background: rgba(0, 234, 255, 0.03);
+
+            border: 1px solid rgba(0, 234, 255, 0.5);
+
+            color: #00eaff;
+
+            font-family: "Courier New", monospace;
+
+            font-size: 12px;
+
+            letter-spacing: 2px;
+
+            cursor: pointer;
+
+            transition: 0.3s;
+        }
+
+        .button:hover {
+            background: rgba(0, 234, 255, 0.12);
+
+            box-shadow:
+                0 0 30px rgba(0, 234, 255, 0.2);
+        }
+
+        /* =========================================
+           STATUS
+        ========================================= */
+
+        .status {
+            position: absolute;
+
+            left: 8%;
+            bottom: 35px;
+
+            z-index: 10;
+
+            color: rgba(255, 255, 255, 0.35);
+
+            font-size: 10px;
+
+            letter-spacing: 2px;
+        }
+
+        .status-dot {
+            display: inline-block;
+
+            width: 6px;
+            height: 6px;
+
+            border-radius: 50%;
+
+            margin-right: 8px;
+
+            background: #00eaff;
+
+            box-shadow:
+                0 0 12px #00eaff;
+        }
+
+        /* =========================================
+           MOBILE
+        ========================================= */
+
+        @media(max-width: 900px) {
+
+            .content {
+                left: 7%;
+            }
+
+            #globe-container {
+                transform: translateX(20%);
+            }
+        }
+
+        @media(max-width: 600px) {
+
+            .content {
+                left: 7%;
+                width: 330px;
+            }
+
+            h1 {
+                font-size: 55px;
+            }
+
+            .description {
+                width: 300px;
+            }
+
+            #globe-container {
+                transform: translateX(35%);
+                opacity: 0.55;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="app">
+
+    <!-- THREE.JS GLOBE -->
+    <div id="globe-container"></div>
+
+    <!-- BLOOM GLOW OVERLAY -->
+    <div id="bloom-overlay"></div>
+
+    <!-- DARK LEFT SIDE -->
+    <div class="left-gradient"></div>
+
+    <!-- VIGNETTE -->
+    <div class="vignette"></div>
+
+
+    <!-- =========================================
+         COSMOS CONTENT
+    ========================================== -->
+
+    <div class="content">
+
+        <div class="eyebrow">
+            GLOBAL OPPORTUNITY NETWORK
+        </div>
+
+        <h1>
+            Explore<br>
+            <span>Beyond.</span>
+        </h1>
+
+        <div class="description">
+            Discover hackathons, internships, workshops
+            and opportunities matched to your skills,
+            interests and career goals.
+        </div>
+
+        <button class="button">
+            EXPLORE OPPORTUNITIES →
+        </button>
+
+    </div>
+
+
+    <div class="status">
+        <span class="status-dot"></span>
+        COSMOS NETWORK ONLINE
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     THREE.JS
+========================================= -->
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+
+
+<script type="module">
+
+import * as THREE from "three";
+
+
+/* =========================================================
+   SCENE
+========================================================= */
+
+const container =
+    document.getElementById("globe-container");
+
+const scene =
+    new THREE.Scene();
+
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+const camera =
+    new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
+
+camera.position.set(0, 0, 7);
+
+
+/* =========================================================
+   RENDERER
+========================================================= */
+
+const renderer =
+    new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true
+    });
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 2)
+);
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setClearColor(0x000000, 1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+container.appendChild(renderer.domElement);
+
+
+/* =========================================================
+   CSS BLOOM — Second renderer for glow overlay
+========================================================= */
+
+const bloomOverlay = document.getElementById('bloom-overlay');
+const bloomRenderer = new THREE.WebGLRenderer({
+    antialias: false,
+    alpha: true
+});
+bloomRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+bloomRenderer.setSize(window.innerWidth, window.innerHeight);
+bloomRenderer.setClearColor(0x000000, 1);
+bloomOverlay.appendChild(bloomRenderer.domElement);
+
+
+/* =========================================================
+   EARTH GROUP
+========================================================= */
+
+const earthGroup = new THREE.Group();
+scene.add(earthGroup);
+
+
+/* =========================================================
+   LAT/LNG → 3D
+========================================================= */
+
+function latLngToVector3(lat, lng, radius) {
+    const phi = (90 - lat) * Math.PI / 180;
+    const theta = (lng + 180) * Math.PI / 180;
+
+    const x = -radius * Math.sin(phi) * Math.cos(theta);
+    const y = radius * Math.cos(phi);
+    const z = radius * Math.sin(phi) * Math.sin(theta);
+
+    return new THREE.Vector3(x, y, z);
+}
+
+
+/* =========================================================
+   GLOBE CORE — Dark sphere with Fresnel glow shader
+========================================================= */
+
+const GLOBE_RADIUS = 2.25;
+
+const globeVertexShader = `
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    varying vec2 vUv;
+    void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+`;
+
+const globeFragmentShader = `
+    uniform float uTime;
+    uniform sampler2D uTexture;
+    uniform float uTextureLoaded;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    varying vec2 vUv;
+
+    void main() {
+        vec3 viewDir = normalize(-vPosition);
+        float fresnel = 1.0 - dot(viewDir, vNormal);
+        fresnel = pow(fresnel, 2.5);
+
+        // Deep dark ocean base
+        vec3 baseColor = vec3(0.01, 0.03, 0.06);
+
+        // Edge glow — cyan/blue Fresnel rim
+        vec3 rimColor = vec3(0.0, 0.55, 0.85);
+        vec3 color = baseColor + rimColor * fresnel * 0.7;
+
+        // If night texture is loaded, blend in city lights
+        if (uTextureLoaded > 0.5) {
+            vec3 texColor = texture2D(uTexture, vUv).rgb;
+            // Boost the lights to cyan-blue tint
+            float lightIntensity = max(texColor.r, max(texColor.g, texColor.b));
+            // Brighter population centers with warm-to-cyan gradient
+            vec3 tintedLights = mix(
+                vec3(0.0, 0.5, 1.0),
+                vec3(0.2, 0.8, 1.0),
+                lightIntensity
+            ) * lightIntensity;
+            color += tintedLights * 2.8;
+
+            // Bright hotspots for major city clusters
+            float hotspot = smoothstep(0.4, 0.9, lightIntensity);
+            color += vec3(0.4, 0.85, 1.0) * hotspot * 1.2;
+        }
+
+        // Subtle surface noise shimmer
+        float noise = sin(vUv.x * 200.0 + uTime * 0.3) * sin(vUv.y * 200.0 - uTime * 0.2);
+        color += vec3(0.0, 0.3, 0.5) * noise * 0.015;
+
+        float alpha = 0.95 + fresnel * 0.05;
+        gl_FragColor = vec4(color, alpha);
+    }
+`;
+
+const globeUniforms = {
+    uTime: { value: 0 },
+    uTexture: { value: null },
+    uTextureLoaded: { value: 0.0 }
+};
+
+const earthGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 128, 128);
+const earthMaterial = new THREE.ShaderMaterial({
+    vertexShader: globeVertexShader,
+    fragmentShader: globeFragmentShader,
+    uniforms: globeUniforms,
+    transparent: true
+});
+
+const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+earthGroup.add(earth);
+
+
+/* =========================================================
+   EARTH TEXTURE — Night lights, tinted cyan-blue
+========================================================= */
+
+const textureLoader = new THREE.TextureLoader();
+
+textureLoader.load(
+    "https://unpkg.com/three-globe/example/img/earth-night.jpg",
+    function(texture) {
+        globeUniforms.uTexture.value = texture;
+        globeUniforms.uTextureLoaded.value = 1.0;
+    },
+    undefined,
+    function(error) {
+        console.log("Earth texture unavailable. Using shader-only globe.");
+    }
+);
+
+
+/* =========================================================
+   ATMOSPHERE GLOW — Custom shader (BackSide)
+========================================================= */
+
+const atmosphereVertexShader = `
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+`;
+
+const atmosphereFragmentShader = `
+    uniform float uTime;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+
+    void main() {
+        vec3 viewDir = normalize(-vPosition);
+        float intensity = pow(dot(viewDir, vNormal), 1.8);
+
+        // Pulsing atmosphere
+        float pulse = 1.0 + sin(uTime * 0.5) * 0.08;
+
+        vec3 color = vec3(0.0, 0.5, 0.9) * intensity * pulse;
+        float alpha = intensity * 0.55 * pulse;
+
+        gl_FragColor = vec4(color, alpha);
+    }
+`;
+
+const atmosphereGeo = new THREE.SphereGeometry(GLOBE_RADIUS * 1.12, 64, 64);
+const atmosphereMat = new THREE.ShaderMaterial({
+    vertexShader: atmosphereVertexShader,
+    fragmentShader: atmosphereFragmentShader,
+    uniforms: { uTime: { value: 0 } },
+    blending: THREE.AdditiveBlending,
+    side: THREE.BackSide,
+    transparent: true,
+    depthWrite: false
+});
+
+const atmosphere = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+earthGroup.add(atmosphere);
+
+
+/* =========================================================
+   INNER ATMOSPHERE (subtle front-side glow)
+========================================================= */
+
+const innerAtmoFragShader = `
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+
+    void main() {
+        vec3 viewDir = normalize(-vPosition);
+        float fresnel = 1.0 - dot(viewDir, vNormal);
+        fresnel = pow(fresnel, 3.0);
+
+        vec3 color = vec3(0.0, 0.6, 1.0) * fresnel;
+        float alpha = fresnel * 0.4;
+
+        gl_FragColor = vec4(color, alpha);
+    }
+`;
+
+const innerAtmoGeo = new THREE.SphereGeometry(GLOBE_RADIUS * 1.005, 64, 64);
+const innerAtmoMat = new THREE.ShaderMaterial({
+    vertexShader: atmosphereVertexShader,
+    fragmentShader: innerAtmoFragShader,
+    blending: THREE.AdditiveBlending,
+    side: THREE.FrontSide,
+    transparent: true,
+    depthWrite: false
+});
+
+const innerAtmo = new THREE.Mesh(innerAtmoGeo, innerAtmoMat);
+earthGroup.add(innerAtmo);
+
+
+/* =========================================================
+   SUBTLE WIREFRAME GRID
+========================================================= */
+
+const wireGeometry = new THREE.SphereGeometry(GLOBE_RADIUS * 1.003, 40, 40);
+const wireMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00aaff,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.03,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+
+const wire = new THREE.Mesh(wireGeometry, wireMaterial);
+earthGroup.add(wire);
+
+
+/* =========================================================
+   CITY / OPPORTUNITY LOCATIONS (all nodes)
+========================================================= */
+
+const locations = [
+    // INDIA
+    [12.97, 77.59],
+    [19.07, 72.87],
+    [28.61, 77.20],
+
+    // ASIA
+    [35.67, 139.65],
+    [31.23, 121.47],
+    [37.56, 126.97],
+    [1.35, 103.82],
+    [22.39, 114.11],
+    [13.75, 100.52],
+    [14.60, 120.98],
+
+    // EUROPE
+    [51.50, -0.12],
+    [48.85, 2.35],
+    [52.52, 13.40],
+    [55.75, 37.61],
+    [41.90, 12.49],
+    [59.33, 18.06],
+    [40.42, -3.70],
+
+    // AMERICA
+    [40.71, -74.00],
+    [37.77, -122.42],
+    [43.65, -79.38],
+    [25.76, -80.19],
+    [34.05, -118.24],
+    [41.88, -87.63],
+    [-23.55, -46.63],
+    [19.43, -99.13],
+
+    // AUSTRALIA
+    [-33.86, 151.20],
+    [-37.81, 144.96],
+
+    // AFRICA
+    [-1.29, 36.82],
+    [30.04, 31.23],
+    [-33.92, 18.42],
+    [6.52, 3.37],
+    [33.59, -7.61],
+
+    // MIDDLE EAST
+    [25.20, 55.27],
+    [24.71, 46.67],
+    [41.01, 28.98]
+];
+
+
+/* =========================================================
+   ORANGE/AMBER GLOWING NETWORK NODES
+   (Sprite-based for that bright glowing dot look)
+========================================================= */
+
+// Create a radial gradient texture for the node glow
+function createNodeTexture(coreColor, glowColor, size) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    const center = size / 2;
+
+    // Outer glow
+    const gradient = ctx.createRadialGradient(
+        center, center, 0,
+        center, center, center
+    );
+    gradient.addColorStop(0, coreColor);
+    gradient.addColorStop(0.15, coreColor);
+    gradient.addColorStop(0.4, glowColor);
+    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+}
+
+const orangeNodeTexture = createNodeTexture(
+    'rgba(255, 220, 140, 1)',
+    'rgba(255, 160, 40, 0.6)',
+    128
+);
+
+const cyanNodeTexture = createNodeTexture(
+    'rgba(140, 240, 255, 1)',
+    'rgba(0, 180, 255, 0.5)',
+    128
+);
+
+// Primary nodes — bright orange/amber (like the image reference)
+const primaryNodeIndices = [0, 3, 7, 10, 13, 17, 20, 24, 25, 29, 32, 34];
+const primaryNodes = [];
+const secondaryNodes = [];
+
+locations.forEach(([lat, lng], i) => {
+    const pos = latLngToVector3(lat, lng, GLOBE_RADIUS * 1.02);
+    const isPrimary = primaryNodeIndices.includes(i);
+
+    const spriteMat = new THREE.SpriteMaterial({
+        map: isPrimary ? orangeNodeTexture : cyanNodeTexture,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+        depthWrite: false,
+        opacity: 1
+    });
+
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.position.copy(pos);
+    sprite.scale.set(
+        isPrimary ? 0.28 : 0.16,
+        isPrimary ? 0.28 : 0.16,
+        1
+    );
+
+    earthGroup.add(sprite);
+
+    if (isPrimary) {
+        primaryNodes.push(sprite);
+    } else {
+        secondaryNodes.push(sprite);
+    }
+});
+
+
+/* =========================================================
+   CONNECTION ARC FUNCTION — Glowing lines
+========================================================= */
+
+const arcs = [];
+
+function createArc(start, end, color, opacity, height) {
+    const startVector = latLngToVector3(start[0], start[1], GLOBE_RADIUS * 1.015);
+    const endVector = latLngToVector3(end[0], end[1], GLOBE_RADIUS * 1.015);
+
+    const dist = startVector.distanceTo(endVector);
+    const arcHeight = GLOBE_RADIUS + (height || 0.4) + dist * 0.12;
+
+    const middle = startVector
+        .clone()
+        .add(endVector)
+        .normalize()
+        .multiplyScalar(arcHeight);
+
+    const curve = new THREE.QuadraticBezierCurve3(
+        startVector,
+        middle,
+        endVector
+    );
+
+    const points = curve.getPoints(80);
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+    // Create alpha attribute for fade at ends
+    const alphas = new Float32Array(81);
+    for (let i = 0; i < 81; i++) {
+        const t = i / 80;
+        const edgeFade = Math.sin(t * Math.PI);
+        alphas[i] = edgeFade;
+    }
+    geometry.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
+
+    const material = new THREE.LineBasicMaterial({
+        color: color || 0x00aaff,
+        transparent: true,
+        opacity: opacity || 0.25,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+
+    const line = new THREE.Line(geometry, material);
+    earthGroup.add(line);
+
+    arcs.push({ line, curve, material });
+    return { line, curve };
+}
+
+
+/* =========================================================
+   GLOBAL CONNECTIONS — Mix of cyan and amber arcs
+========================================================= */
+
+// Cyan/blue arcs (subtle network lines)
+const cyanArcs = [
+    [[12.97, 77.59], [35.67, 139.65]],
+    [[12.97, 77.59], [51.50, -0.12]],
+    [[12.97, 77.59], [40.71, -74.00]],
+    [[51.50, -0.12], [40.71, -74.00]],
+    [[35.67, 139.65], [-33.86, 151.20]],
+    [[1.35, 103.82], [37.56, 126.97]],
+    [[48.85, 2.35], [1.35, 103.82]],
+    [[52.52, 13.40], [55.75, 37.61]],
+    [[37.77, -122.42], [35.67, 139.65]],
+    [[25.20, 55.27], [12.97, 77.59]],
+    [[40.71, -74.00], [25.76, -80.19]],
+    [[51.50, -0.12], [59.33, 18.06]],
+    [[41.90, 12.49], [41.01, 28.98]],
+    [[22.39, 114.11], [13.75, 100.52]],
+    [[-33.86, 151.20], [-37.81, 144.96]],
+    [[6.52, 3.37], [30.04, 31.23]],
+    [[-1.29, 36.82], [25.20, 55.27]],
+    [[34.05, -118.24], [19.43, -99.13]],
+    [[43.65, -79.38], [41.88, -87.63]],
+    [[40.42, -3.70], [33.59, -7.61]]
+];
+
+cyanArcs.forEach(([s, e]) => {
+    createArc(s, e, 0x0088cc, 0.18, 0.35);
+});
+
+// Amber/orange arcs (bright network connections, like in the image)
+const orangeArcs = [
+    [[12.97, 77.59], [22.39, 114.11]],
+    [[22.39, 114.11], [35.67, 139.65]],
+    [[51.50, -0.12], [52.52, 13.40]],
+    [[40.71, -74.00], [37.77, -122.42]],
+    [[25.20, 55.27], [41.01, 28.98]],
+    [[-33.86, 151.20], [1.35, 103.82]],
+    [[12.97, 77.59], [25.20, 55.27]],
+    [[48.85, 2.35], [40.42, -3.70]],
+    [[-23.55, -46.63], [40.71, -74.00]],
+    [[30.04, 31.23], [41.90, 12.49]],
+    [[24.71, 46.67], [19.07, 72.87]],
+    [[55.75, 37.61], [41.01, 28.98]]
+];
+
+orangeArcs.forEach(([s, e]) => {
+    createArc(s, e, 0xff8830, 0.35, 0.45);
+});
+
+
+/* =========================================================
+   TRAVELING LIGHT PARTICLES on arcs
+========================================================= */
+
+const travelingParticles = [];
+
+function createTravelingParticle(curve, color, speed) {
+    const mat = new THREE.SpriteMaterial({
+        map: color === 0xff9944
+            ? orangeNodeTexture
+            : cyanNodeTexture,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+        depthWrite: false,
+        opacity: 0.9
+    });
+
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(0.08, 0.08, 1);
+    earthGroup.add(sprite);
+
+    travelingParticles.push({
+        sprite,
+        curve,
+        t: Math.random(),
+        speed: speed || 0.003 + Math.random() * 0.004,
+        direction: Math.random() > 0.5 ? 1 : -1
+    });
+}
+
+// Add travelers on some arcs
+arcs.forEach((arc, i) => {
+    if (i % 2 === 0) {
+        createTravelingParticle(
+            arc.curve,
+            i < cyanArcs.length ? 0x00ccff : 0xff9944,
+            0.002 + Math.random() * 0.003
+        );
+    }
+});
+
+
+/* =========================================================
+   ORBITAL RINGS — Thin elliptical rings around the globe
+========================================================= */
+
+function createOrbitalRing(radiusX, radiusY, tiltX, tiltY, tiltZ, opacity, color) {
+    const curve = new THREE.EllipseCurve(
+        0, 0,
+        radiusX, radiusY,
+        0, 2 * Math.PI,
+        false, 0
+    );
+
+    const pts = curve.getPoints(200);
+    const pts3d = pts.map(p => new THREE.Vector3(p.x, p.y, 0));
+    const geo = new THREE.BufferGeometry().setFromPoints(pts3d);
+
+    const mat = new THREE.LineBasicMaterial({
+        color: color || 0x0077aa,
+        transparent: true,
+        opacity: opacity || 0.12,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+
+    const ring = new THREE.LineLoop(geo, mat);
+    ring.rotation.set(tiltX, tiltY, tiltZ);
+    earthGroup.add(ring);
+    return ring;
+}
+
+// Multiple orbital rings at different angles (like satellite orbits in the image)
+const ring1 = createOrbitalRing(GLOBE_RADIUS * 1.35, GLOBE_RADIUS * 1.30, 0.8, 0.3, 0.1, 0.10, 0x0088bb);
+const ring2 = createOrbitalRing(GLOBE_RADIUS * 1.45, GLOBE_RADIUS * 1.38, -0.5, 0.7, -0.2, 0.07, 0x005588);
+const ring3 = createOrbitalRing(GLOBE_RADIUS * 1.55, GLOBE_RADIUS * 1.50, 1.2, -0.4, 0.5, 0.05, 0x004466);
+const ring4 = createOrbitalRing(GLOBE_RADIUS * 1.25, GLOBE_RADIUS * 1.20, -0.3, -0.6, 0.8, 0.08, 0x006699);
+
+
+/* =========================================================
+   DEEP SPACE STARFIELD — Layered for depth
+========================================================= */
+
+function createStarfield(count, minRadius, maxRadius, size, opacity) {
+    const positions = [];
+    for (let i = 0; i < count; i++) {
+        const radius = minRadius + Math.random() * (maxRadius - minRadius);
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+
+        positions.push(
+            radius * Math.sin(phi) * Math.cos(theta),
+            radius * Math.sin(phi) * Math.sin(theta),
+            radius * Math.cos(phi)
+        );
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+    // Per-star random brightness
+    const colors = [];
+    for (let i = 0; i < count; i++) {
+        const brightness = 0.3 + Math.random() * 0.7;
+        // Slight blue/cyan tint for some stars
+        const isCyan = Math.random() > 0.7;
+        colors.push(
+            isCyan ? brightness * 0.6 : brightness,
+            isCyan ? brightness : brightness,
+            isCyan ? brightness : brightness * 0.95
+        );
+    }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+    const mat = new THREE.PointsMaterial({
+        size,
+        transparent: true,
+        opacity,
+        vertexColors: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+    });
+
+    return new THREE.Points(geo, mat);
+}
+
+// Near stars — brighter, larger
+const nearStars = createStarfield(300, 4, 8, 0.035, 0.8);
+scene.add(nearStars);
+
+// Mid stars
+const midStars = createStarfield(600, 8, 20, 0.025, 0.6);
+scene.add(midStars);
+
+// Far stars — many, dim, tiny
+const farStars = createStarfield(1500, 20, 60, 0.015, 0.4);
+scene.add(farStars);
+
+
+/* =========================================================
+   GLOWING ACCENT PARTICLES near globe (like image nebula)
+========================================================= */
+
+function createAccentParticles(count, minR, maxR, color, size, opacity) {
+    const positions = [];
+    for (let i = 0; i < count; i++) {
+        const radius = minR + Math.random() * (maxR - minR);
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+
+        positions.push(
+            radius * Math.sin(phi) * Math.cos(theta),
+            radius * Math.sin(phi) * Math.sin(theta),
+            radius * Math.cos(phi)
+        );
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+    const mat = new THREE.PointsMaterial({
+        color,
+        size,
+        transparent: true,
+        opacity,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+    });
+
+    const pts = new THREE.Points(geo, mat);
+    return pts;
+}
+
+// Cyan dust cloud near the globe
+const cyanDust = createAccentParticles(400, GLOBE_RADIUS * 1.05, GLOBE_RADIUS * 2.0, 0x0099dd, 0.025, 0.5);
+earthGroup.add(cyanDust);
+
+// Warm amber dust sprinkles
+const amberDust = createAccentParticles(80, GLOBE_RADIUS * 1.1, GLOBE_RADIUS * 1.6, 0xff8844, 0.03, 0.4);
+earthGroup.add(amberDust);
+
+// Distant blue nebula particles
+const nebulaDust = createAccentParticles(200, GLOBE_RADIUS * 2.0, GLOBE_RADIUS * 4.0, 0x003366, 0.06, 0.2);
+scene.add(nebulaDust);
+
+
+/* =========================================================
+   POSITION GLOBE TO RIGHT
+========================================================= */
+
+earthGroup.position.x =
+    window.innerWidth < 700
+        ? 1.4
+        : 1.8;
+
+earthGroup.position.y = 0;
+
+
+/* =========================================================
+   MOUSE INTERACTION
+========================================================= */
+
+let mouseX = 0;
+let mouseY = 0;
+
+window.addEventListener(
+    "mousemove",
+    event => {
+        mouseX = (event.clientX / window.innerWidth - 0.5);
+        mouseY = (event.clientY / window.innerHeight - 0.5);
+    }
+);
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+const clock = new THREE.Clock();
+
+
+function animate() {
+
+    requestAnimationFrame(animate);
+
+    const elapsed = clock.getElapsedTime();
+
+
+    /* Slow Earth rotation */
+    earthGroup.rotation.y += 0.0018;
+
+
+    /* Slight mouse parallax */
+    earthGroup.rotation.x +=
+        (-mouseY * 0.08 - earthGroup.rotation.x) * 0.01;
+
+
+    /* Update globe shader time */
+    globeUniforms.uTime.value = elapsed;
+    atmosphereMat.uniforms.uTime.value = elapsed;
+
+
+    /* Pulsing orange nodes */
+    const pulse = 1 + Math.sin(elapsed * 2.5) * 0.15;
+    primaryNodes.forEach((node, i) => {
+        const phase = elapsed * 2.5 + i * 0.5;
+        const s = 0.28 * (1 + Math.sin(phase) * 0.3);
+        node.scale.set(s, s, 1);
+        node.material.opacity = 0.7 + Math.sin(phase) * 0.3;
+    });
+
+    /* Subtle pulsing secondary nodes */
+    secondaryNodes.forEach((node, i) => {
+        const phase = elapsed * 1.8 + i * 0.7;
+        const s = 0.16 * (1 + Math.sin(phase) * 0.2);
+        node.scale.set(s, s, 1);
+        node.material.opacity = 0.5 + Math.sin(phase) * 0.2;
+    });
+
+
+    /* Traveling light particles */
+    travelingParticles.forEach(p => {
+        p.t += p.speed * p.direction;
+        if (p.t > 1) p.t = 0;
+        if (p.t < 0) p.t = 1;
+
+        const pos = p.curve.getPointAt(p.t);
+        p.sprite.position.copy(pos);
+
+        // Fade at arc ends
+        const fadeFactor = Math.sin(p.t * Math.PI);
+        p.sprite.material.opacity = fadeFactor * 0.8;
+    });
+
+
+    /* Floating surrounding particles */
+    nearStars.rotation.y += 0.00008;
+    midStars.rotation.y += 0.00004;
+    farStars.rotation.y -= 0.00002;
+
+    cyanDust.rotation.y += 0.00025;
+    cyanDust.rotation.x = Math.sin(elapsed * 0.1) * 0.02;
+
+    amberDust.rotation.y -= 0.0003;
+
+    nebulaDust.rotation.y += 0.00005;
+    nebulaDust.rotation.x = Math.sin(elapsed * 0.05) * 0.01;
+
+
+    /* Orbital rings subtle rotation */
+    ring1.rotation.z += 0.0003;
+    ring2.rotation.z -= 0.0002;
+    ring3.rotation.z += 0.00015;
+    ring4.rotation.z -= 0.00025;
+
+
+    /* Arc opacity breathing */
+    arcs.forEach((arc, i) => {
+        const phase = elapsed * 0.8 + i * 0.3;
+        const baseOpacity = i < cyanArcs.length ? 0.18 : 0.35;
+        arc.material.opacity = baseOpacity * (0.7 + Math.sin(phase) * 0.3);
+    });
+
+
+    renderer.render(scene, camera);
+    bloomRenderer.render(scene, camera);
+}
+
+
+animate();
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+window.addEventListener(
+    "resize",
+    () => {
+        camera.aspect =
+            window.innerWidth / window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+        bloomRenderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+        earthGroup.position.x =
+            window.innerWidth < 700
+                ? 1.4
+                : 1.8;
+    }
+);
+
+</script>
+
+</body>
+</html>

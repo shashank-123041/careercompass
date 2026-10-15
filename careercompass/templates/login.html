@@ -1,0 +1,768 @@
+{% extends "base.html" %}
+{% block title %}Sign In — CareerCompass{% endblock %}
+
+{% block extra_css %}
+/* ── Strip the global chrome for this page ───────────────────────────── */
+body > nav { display: none !important; }
+main { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+
+/* ══════════════════════════════════════════════
+   BACKGROUND STACK  (fixed, never intercepts input)
+   nebula gradients → grid → globe canvas → glow → vignette
+════════════════════════════════════════════ */
+#globe-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  background:
+    radial-gradient(1100px 700px at 76% 42%, rgba(61,125,255,.11), transparent 62%),
+    radial-gradient(900px 600px at 6% 108%, rgba(61,125,255,.08), transparent 60%),
+    var(--bg);
+}
+#globe-bg .bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 75% at 72% 45%, #000 0%, transparent 78%);
+          mask-image: radial-gradient(ellipse 70% 75% at 72% 45%, #000 0%, transparent 78%);
+}
+#globe-canvas { position: absolute; inset: 0; }
+#globeGlow {
+  position: absolute; left: var(--gx, 70%); top: var(--gy, 45%);
+  width: var(--gd, 760px); aspect-ratio: 1; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(61,125,255,.22) 0%, rgba(61,125,255,.07) 40%, transparent 68%);
+}
+#globe-bg .bg-vignette {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5,7,13,.82) 0%, rgba(5,7,13,.30) 36%, transparent 60%),
+    radial-gradient(ellipse at 62% 50%, transparent 42%, rgba(0,0,0,.72) 100%);
+}
+#globe-bg.no-webgl #globe-canvas { display: none; }
+
+/* ══════════════════════════════════════════════
+   STAGE
+════════════════════════════════════════════ */
+.auth-stage {
+  position: relative; z-index: 2; min-height: 100vh;
+  display: grid; grid-template-columns: minmax(400px, 480px) 1fr;
+  gap: clamp(2rem, 5vw, 6rem); align-items: center;
+  padding: 5.5rem clamp(1.25rem, 5vw, 5rem) 3rem;
+}
+
+.auth-top {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.5rem clamp(1.25rem, 5vw, 5rem);
+  animation: fadeIn .9s var(--ease) .1s both;
+}
+.auth-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.12rem; letter-spacing: -.02em; color: var(--text); text-decoration: none; }
+.auth-brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px var(--accent); }
+.auth-brand .accent { color: var(--accent2); }
+.top-link { display: inline-flex; align-items: center; gap: 6px; font-size: .84rem; font-weight: 600; color: var(--text2); text-decoration: none; padding: .5rem .9rem; border-radius: 999px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); transition: all .25s var(--ease); }
+.top-link:hover { color: var(--text); border-color: rgba(111,162,255,.5); background: rgba(61,125,255,.08); }
+.top-link i { font-size: 1.1rem; transition: transform .25s var(--ease); }
+.top-link:hover i { transform: translateX(3px); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ══════════════════════════════════════════════
+   AUTH PANEL — frosted glass, one block, two panes
+════════════════════════════════════════════ */
+.auth-panel {
+  position: relative; width: 100%; max-width: 480px; border-radius: 26px;
+  padding: 1.5rem 1.6rem 1.35rem;
+  background: linear-gradient(180deg, rgba(22,26,41,.74), rgba(10,13,22,.68));
+  -webkit-backdrop-filter: blur(26px) saturate(150%); backdrop-filter: blur(26px) saturate(150%);
+  box-shadow: 0 40px 100px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+  animation: rise .85s var(--ease) .15s both;
+}
+.auth-panel::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(135deg, rgba(111,162,255,.55), rgba(255,255,255,.04) 35%, rgba(255,255,255,.03) 65%, rgba(61,125,255,.3));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+
+/* Segmented tabs with a sliding pill */
+.tabs { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; margin-bottom: 1.5rem; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); }
+.tab { position: relative; z-index: 2; padding: .65rem 0; background: none; border: 0; border-radius: 10px; color: var(--text2); font: 600 .84rem var(--font); cursor: pointer; transition: color .3s var(--ease); }
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { color: #fff; }
+.tab-pill { position: absolute; z-index: 1; top: 4px; left: 4px; width: calc(50% - 4px); height: calc(100% - 8px); border-radius: 10px; background: linear-gradient(135deg, var(--accent), #5b6cf0); box-shadow: 0 6px 18px rgba(61,125,255,.38); transition: transform .5s var(--ease); }
+.tabs[data-mode="register"] .tab-pill { transform: translateX(100%); }
+
+/* Sliding panes inside the same block */
+.pane-viewport { overflow: hidden; margin: 0 -6px; transition: height .55s var(--ease); }
+.pane-track { display: flex; align-items: flex-start; transition: transform .65s var(--ease); }
+.pane-viewport[data-mode="register"] .pane-track { transform: translateX(-100%); }
+.pane { flex: 0 0 100%; width: 100%; padding: 4px 6px 6px; transition: opacity .45s var(--ease); }
+.pane[inert] { opacity: 0; pointer-events: none; }
+
+.eyebrow-mono { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent2); }
+.pane h1 { font-size: 1.85rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; margin: .5rem 0 .4rem; }
+.pane-sub { font-size: .88rem; color: var(--text3); margin-bottom: 1.35rem; line-height: 1.5; }
+
+/* Google */
+.google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 48px; border: 0; border-radius: 12px; background: #fff; color: #1f2330; font: 600 .9rem var(--font); cursor: pointer; transition: transform .2s var(--ease), box-shadow .2s var(--ease); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.google-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+.google-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(61,125,255,.28); }
+.google-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+.divider { display: flex; align-items: center; gap: 12px; margin: 1.15rem 0; color: var(--text3); font: .68rem var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08); }
+
+/* Fields */
+.field { display: block; margin-bottom: 1rem; }
+.field-label { display: block; margin-bottom: .4rem; font-size: .74rem; font-weight: 600; color: var(--text2); }
+.field-control { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 .9rem; border-radius: 12px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); transition: all .25s var(--ease); }
+.field-control > i { font-size: 1.1rem; color: var(--text3); transition: color .25s var(--ease); }
+.field-control:focus-within { border-color: rgba(111,162,255,.75); background: rgba(61,125,255,.06); box-shadow: 0 0 0 4px rgba(61,125,255,.14); }
+.field-control:focus-within > i { color: var(--accent2); }
+.field-control input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--text); font: 500 .92rem var(--font); }
+.field-control input::placeholder { color: var(--text3); font-weight: 400; }
+.field-control input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #121a31 inset; -webkit-text-fill-color: var(--text); caret-color: var(--text); }
+.pw-toggle { display: flex; padding: 4px; background: none; border: 0; border-radius: 6px; color: var(--text3); cursor: pointer; }
+.pw-toggle:hover { color: var(--text); }
+.pw-toggle i { font-size: 1.15rem; }
+
+.forgot-row { display: flex; justify-content: flex-end; margin: -.35rem 0 1.1rem; }
+.forgot-row a { font-size: .78rem; color: var(--text3); cursor: pointer; text-decoration: none; transition: color .2s var(--ease); }
+.forgot-row a:hover { color: var(--accent2); }
+
+/* Primary button with a light sweep */
+.btn-auth { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 50px; border: 0; border-radius: 12px; background: linear-gradient(135deg, var(--accent) 0%, #5b6cf0 100%); color: #fff; font: 700 .95rem var(--font); cursor: pointer; box-shadow: 0 10px 28px rgba(61,125,255,.36); transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+.btn-auth::after { content: ''; position: absolute; top: 0; bottom: 0; left: -80%; width: 55%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.3), transparent); transform: skewX(-20deg); transition: left .75s var(--ease); }
+.btn-auth:hover { transform: translateY(-1px); box-shadow: 0 14px 34px rgba(61,125,255,.45); }
+.btn-auth:hover::after { left: 130%; }
+.btn-auth i { font-size: 1.15rem; transition: transform .25s var(--ease); }
+.btn-auth:hover i { transform: translateX(3px); }
+.btn-auth:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+.auth-err { display: none; align-items: center; gap: 8px; margin-top: 1rem; padding: .65rem .85rem; border-radius: 10px; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25); color: #fca5a5; font-size: .78rem; }
+.auth-err i { font-size: 1rem; flex-shrink: 0; }
+.auth-err.show { display: flex; }
+
+.switch-line { margin-top: 1.15rem; text-align: center; font-size: .82rem; color: var(--text3); }
+.switch-line a { color: var(--accent2); font-weight: 600; text-decoration: none; cursor: pointer; }
+.switch-line a:hover { text-decoration: underline; }
+
+.secure-note { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,.06); font-size: .72rem; color: var(--text3); }
+.secure-note i { color: var(--green); font-size: .9rem; }
+
+/* ══════════════════════════════════════════════
+   HERO ZONE — caption under the globe
+════════════════════════════════════════════ */
+.hero-zone { align-self: stretch; display: flex; align-items: flex-end; justify-content: center; padding-bottom: clamp(.5rem, 4vh, 3rem); }
+.hero-caption { max-width: 540px; text-align: center; animation: rise .95s var(--ease) .4s both; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(34,197,94,.5); animation: livePulse 2.2s infinite; }
+@keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,.5); } 70% { box-shadow: 0 0 0 9px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
+.hero-caption h2 { margin: .85rem 0 .7rem; font-size: clamp(1.9rem, 3.3vw, 3rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.08; }
+.hero-caption h2 .grad { background: linear-gradient(135deg, var(--accent2), var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.hero-caption p { font-size: .95rem; line-height: 1.65; color: var(--text2); }
+.hero-feats { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: 1.25rem; }
+.hero-feats span { display: inline-flex; align-items: center; gap: 7px; padding: .42rem .85rem; border-radius: 999px; font-size: .76rem; font-weight: 600; color: var(--text2); background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); }
+.hero-feats i { color: var(--accent2); font-size: 1rem; }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════ */
+@media (max-width: 980px) {
+  .auth-stage { grid-template-columns: 1fr; justify-items: center; padding-top: 6rem; }
+  .hero-zone { display: none; }
+  #globe-canvas { opacity: .5; }
+  #globe-bg .bg-vignette { background: radial-gradient(ellipse at 50% 50%, rgba(5,7,13,.2) 30%, rgba(0,0,0,.75) 100%); }
+}
+@media (max-width: 520px) {
+  .auth-panel { padding: 1.2rem 1.1rem 1.1rem; border-radius: 22px; }
+  .pane h1 { font-size: 1.6rem; }
+  .top-link span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-panel, .auth-top, .hero-caption { animation: none; }
+  .live-dot { animation: none; }
+}
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap">
+
+<!-- Background: nebula + grid + globe + glow + vignette -->
+<div id="globe-bg" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div id="globe-canvas"></div>
+  <div id="globeGlow"></div>
+  <div class="bg-vignette"></div>
+</div>
+
+<div class="auth-top">
+  <a class="auth-brand" href="/"><span class="dot"></span><span>Career<span class="accent">Compass</span></span></a>
+  <a class="top-link" href="/roles"><span>Browse roadmaps</span><i class='bx bx-right-arrow-alt'></i></a>
+</div>
+
+<div class="auth-stage">
+
+  <!-- ══ AUTH PANEL ══ -->
+  <section class="auth-panel" id="authPanel">
+    <div class="tabs" id="authTabs" data-mode="login" role="tablist">
+      <span class="tab-pill"></span>
+      <button class="tab" id="tabLogin" type="button" role="tab" aria-selected="true">Sign in</button>
+      <button class="tab" id="tabRegister" type="button" role="tab" aria-selected="false">Create account</button>
+    </div>
+
+    <div class="pane-viewport" id="paneViewport" data-mode="login">
+      <div class="pane-track">
+
+        <!-- Sign in -->
+        <div class="pane" id="paneLogin">
+          <span class="eyebrow-mono">Sign in</span>
+          <h1>Welcome back</h1>
+          <p class="pane-sub">Pick up your roadmap right where you left it.</p>
+
+          <button type="button" class="google-btn" id="googleLoginBtn">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            Continue with Google
+          </button>
+          <div class="divider"><span>or with email</span></div>
+
+          <form id="loginForm">
+            <label class="field">
+              <span class="field-label">Email</span>
+              <span class="field-control"><i class='bx bx-envelope'></i><input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" required></span>
+            </label>
+            <label class="field">
+              <span class="field-label">Password</span>
+              <span class="field-control"><i class='bx bx-lock-alt'></i><input type="password" id="loginPassword" placeholder="Your password" autocomplete="current-password" required minlength="6"><button type="button" class="pw-toggle" aria-label="Show password"><i class='bx bx-show'></i></button></span>
+            </label>
+            <div class="forgot-row"><a id="forgotPasswordLink">Forgot password?</a></div>
+            <button type="submit" class="btn-auth" id="loginSubmitBtn"><span>Sign In</span><i class='bx bx-right-arrow-alt'></i></button>
+          </form>
+          <div class="auth-err" id="loginErr"><i class='bx bxs-error-circle'></i><span id="loginErrText"></span></div>
+          <p class="switch-line">New to CareerCompass? <a data-switch="register">Create an account</a></p>
+        </div>
+
+        <!-- Create account -->
+        <div class="pane" id="paneRegister" inert aria-hidden="true">
+          <span class="eyebrow-mono">Create account</span>
+          <h1>Start mapping your path</h1>
+          <p class="pane-sub">Role-matched roadmaps and opportunities, built around your skills.</p>
+
+          <button type="button" class="google-btn" id="googleRegisterBtn">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            Sign up with Google
+          </button>
+          <div class="divider"><span>or with email</span></div>
+
+          <form id="registerForm">
+            <label class="field">
+              <span class="field-label">Full name</span>
+              <span class="field-control"><i class='bx bx-user'></i><input type="text" id="registerName" placeholder="Your name" autocomplete="name"></span>
+            </label>
+            <label class="field">
+              <span class="field-label">Email</span>
+              <span class="field-control"><i class='bx bx-envelope'></i><input type="email" id="registerEmail" placeholder="you@example.com" autocomplete="email" required></span>
+            </label>
+            <label class="field">
+              <span class="field-label">Password</span>
+              <span class="field-control"><i class='bx bx-lock-alt'></i><input type="password" id="registerPassword" placeholder="At least 6 characters" autocomplete="new-password" required minlength="6"><button type="button" class="pw-toggle" aria-label="Show password"><i class='bx bx-show'></i></button></span>
+            </label>
+            <button type="submit" class="btn-auth" id="registerSubmitBtn"><span>Create Account</span><i class='bx bx-right-arrow-alt'></i></button>
+          </form>
+          <div class="auth-err" id="registerErr"><i class='bx bxs-error-circle'></i><span id="registerErrText"></span></div>
+          <p class="switch-line">Already have an account? <a data-switch="login">Sign in</a></p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="secure-note"><i class='bx bxs-lock-alt'></i> Secured by Firebase Authentication</div>
+  </section>
+
+  <!-- ══ HERO ZONE (globe sits behind this) ══ -->
+  <div class="hero-zone" id="heroZone">
+    <div class="hero-caption">
+      <span class="eyebrow-mono"><span class="live-dot"></span> Global opportunity network</span>
+      <h2>Your career, <span class="grad">mapped.</span></h2>
+      <p>Role-matched roadmaps, skill tracking and live opportunities from around the world — built around what you actually know.</p>
+      <div class="hero-feats">
+        <span><i class='bx bx-map-alt'></i> Role roadmaps</span>
+        <span><i class='bx bx-target-lock'></i> Skill matching</span>
+        <span><i class='bx bx-trending-up'></i> Progress tracking</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ═════════════════════════════════════════════════════════
+     GLOBE  (single renderer, paused when the tab is hidden,
+     static single frame under prefers-reduced-motion)
+══════════════════════════════════════════════════════════ -->
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+const bg = document.getElementById("globe-bg");
+const holder = document.getElementById("globe-canvas");
+const zone = document.getElementById("heroZone");
+const glow = document.getElementById("globeGlow");
+
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const lowPower = window.innerWidth < 700 || (navigator.hardwareConcurrency || 8) <= 4;
+const Q = lowPower ? 0.5 : 1;
+
+let renderer = null;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: !lowPower, alpha: true, powerPreference: "high-performance" });
+} catch (err) {
+  bg.classList.add("no-webgl");   // CSS background stays; page works without the globe
+}
+if (renderer) boot(renderer);
+
+function boot(renderer) {
+  const CAM_Z = 7, CAM_FOV = 45, GLOBE_RADIUS = 2.25;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(CAM_FOV, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, CAM_Z);
+
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowPower ? 1 : 1.5));
+  renderer.setClearColor(0x000000, 0);
+  renderer.domElement.style.cssText = "display:block;width:100%;height:100%";
+  holder.appendChild(renderer.domElement);
+
+  const earthGroup = new THREE.Group();
+  scene.add(earthGroup);
+
+  const blue = 0x3d7dff, blueSoft = 0x6fa2ff, gold = 0xeab308;
+
+  function latLngToVector3(lat, lng, radius) {
+    const phi = (90 - lat) * Math.PI / 180;
+    const theta = (lng + 180) * Math.PI / 180;
+    return new THREE.Vector3(-radius * Math.sin(phi) * Math.cos(theta), radius * Math.cos(phi), radius * Math.sin(phi) * Math.sin(theta));
+  }
+
+  /* ── Globe core: transparent oceans, hairline coasts, city lights ── */
+  const globeVertex = `
+    varying vec3 vNormal; varying vec3 vPosition; varying vec2 vUv;
+    void main() {
+      vNormal = normalize(normalMatrix * normal);
+      vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`;
+  const globeFragment = `
+    uniform sampler2D uWaterMap; uniform sampler2D uNightMap; uniform vec2 uTexel;
+    uniform vec3 uRim; uniform vec3 uCoast; uniform vec3 uLightA; uniform vec3 uLightB;
+    varying vec3 vNormal; varying vec3 vPosition; varying vec2 vUv;
+    void main() {
+      vec3 viewDir = normalize(-vPosition);
+      float NdotV = clamp(dot(viewDir, normalize(vNormal)), 0.0, 1.0);
+
+      float water = texture2D(uWaterMap, vUv).r;            // 1 = ocean, 0 = land
+      float land = clamp(1.0 - water, 0.0, 1.0);
+      float wR = texture2D(uWaterMap, vUv + vec2(uTexel.x, 0.0)).r;
+      float wU = texture2D(uWaterMap, vUv + vec2(0.0, uTexel.y)).r;
+      float coast = clamp(length(vec2(wR - water, wU - water)) * 2.8, 0.0, 1.0);
+
+      vec3 nightTex = texture2D(uNightMap, vUv).rgb;
+      float cityVal = max(nightTex.r, max(nightTex.g, nightTex.b));
+
+      float rimGlow = pow(1.0 - NdotV, 3.5);
+      vec3 color; float alpha;
+
+      if (land > 0.06 || cityVal > 0.05) {
+        vec3 landColor = mix(vec3(0.004, 0.012, 0.04), vec3(0.010, 0.035, 0.11), land);
+        vec3 coastColor = uCoast * coast * 0.9;
+        vec3 cityLights = mix(uLightA, uLightB, smoothstep(0.35, 0.85, cityVal)) * pow(cityVal, 1.3) * 2.0;
+        cityLights += vec3(0.95, 0.82, 0.45) * smoothstep(0.65, 0.98, cityVal) * 0.8;   // faint warm hotspots
+        color = landColor + coastColor + cityLights + uRim * (rimGlow * 0.15);
+        alpha = clamp(land * 0.38 + coast * 0.65 + cityVal * 0.45, 0.0, 0.82);
+      } else {
+        float h = rimGlow * 0.12;
+        color = uRim * h; alpha = h;
+      }
+      gl_FragColor = vec4(color, clamp(alpha, 0.0, 1.0));
+    }`;
+
+  const solid = (r, g, b) => { const t = new THREE.DataTexture(new Uint8Array([r, g, b, 255]), 1, 1, THREE.RGBAFormat); t.needsUpdate = true; return t; };
+
+  const globeUniforms = {
+    uWaterMap: { value: solid(255, 255, 255) },     // placeholder = all ocean (transparent)
+    uNightMap: { value: solid(0, 0, 0) },
+    uTexel: { value: new THREE.Vector2(1 / 1600, 1 / 800) },
+    uRim: { value: new THREE.Vector3(0.24, 0.49, 1.0) },
+    uCoast: { value: new THREE.Vector3(0.36, 0.63, 1.0) },
+    uLightA: { value: new THREE.Vector3(0.20, 0.45, 0.95) },
+    uLightB: { value: new THREE.Vector3(0.82, 0.91, 1.0) }
+  };
+
+  const loader = new THREE.TextureLoader();
+  loader.setCrossOrigin("anonymous");
+  function loadMap(localUrl, cdnUrl, key, onTex) {
+    const apply = (tex) => { onTex && onTex(tex); globeUniforms[key].value = tex; if (!running) renderOnce(); };
+    loader.load(localUrl, apply, undefined, () => loader.load(cdnUrl, apply));
+  }
+  loadMap("{{ url_for('static', filename='img/earth-water.png') }}",
+          "https://cdn.jsdelivr.net/npm/three-globe@2.45.3/example/img/earth-water.png", "uWaterMap",
+          (tex) => globeUniforms.uTexel.value.set(1 / tex.image.width, 1 / tex.image.height));
+  loadMap("{{ url_for('static', filename='img/earth-night.jpg') }}",
+          "https://cdn.jsdelivr.net/npm/three-globe@2.45.3/example/img/earth-night.jpg", "uNightMap",
+          (tex) => { tex.generateMipmaps = false; tex.minFilter = THREE.LinearFilter; });   // saves ~1/3 GPU memory
+
+  earthGroup.add(new THREE.Mesh(
+    new THREE.SphereGeometry(GLOBE_RADIUS, lowPower ? 64 : 96, lowPower ? 64 : 96),
+    new THREE.ShaderMaterial({ vertexShader: globeVertex, fragmentShader: globeFragment, uniforms: globeUniforms, transparent: true, depthWrite: false })
+  ));
+
+  /* ── Atmosphere rim ── */
+  const atmosphereMat = new THREE.ShaderMaterial({
+    vertexShader: `varying vec3 vNormal; varying vec3 vPosition;
+      void main(){ vNormal = normalize(normalMatrix * normal); vPosition = (modelViewMatrix * vec4(position,1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `uniform float uTime; varying vec3 vNormal; varying vec3 vPosition;
+      void main(){
+        float d = dot(normalize(-vPosition), vNormal);
+        float rim = smoothstep(0.65, 0.05, d) * smoothstep(0.0, 0.08, d);
+        float pulse = 1.0 + sin(uTime * 0.8) * 0.08;
+        gl_FragColor = vec4(vec3(0.24, 0.49, 1.0) * rim * pulse * 1.5, rim * 0.45 * pulse);
+      }`,
+    uniforms: { uTime: { value: 0 } },
+    blending: THREE.AdditiveBlending, side: THREE.BackSide, transparent: true, depthWrite: false
+  });
+  earthGroup.add(new THREE.Mesh(new THREE.SphereGeometry(GLOBE_RADIUS * 1.15, 48, 48), atmosphereMat));
+
+  earthGroup.add(new THREE.Mesh(
+    new THREE.SphereGeometry(GLOBE_RADIUS * 1.003, 40, 40),
+    new THREE.MeshBasicMaterial({ color: blue, wireframe: true, transparent: true, opacity: 0.035, blending: THREE.AdditiveBlending, depthWrite: false })
+  ));
+
+  /* ── Network nodes ── */
+  const locations = [
+    [12.97, 77.59], [19.07, 72.87], [28.61, 77.20],
+    [35.67, 139.65], [31.23, 121.47], [37.56, 126.97], [1.35, 103.82], [22.39, 114.11], [13.75, 100.52], [14.60, 120.98],
+    [51.50, -0.12], [48.85, 2.35], [52.52, 13.40], [55.75, 37.61], [41.90, 12.49], [59.33, 18.06], [40.42, -3.70],
+    [40.71, -74.00], [37.77, -122.42], [43.65, -79.38], [25.76, -80.19], [34.05, -118.24], [41.88, -87.63], [-23.55, -46.63], [19.43, -99.13],
+    [-33.86, 151.20], [-37.81, 144.96],
+    [-1.29, 36.82], [30.04, 31.23], [-33.92, 18.42], [6.52, 3.37], [33.59, -7.61],
+    [25.20, 55.27], [24.71, 46.67], [41.01, 28.98]
+  ];
+
+  function nodeTexture(core, glowCol) {
+    const size = 128, c = document.createElement("canvas"); c.width = c.height = size;
+    const ctx = c.getContext("2d"), m = size / 2;
+    const g = ctx.createRadialGradient(m, m, 0, m, m, m);
+    g.addColorStop(0, core); g.addColorStop(0.15, core); g.addColorStop(0.4, glowCol); g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
+    return new THREE.CanvasTexture(c);
+  }
+  const goldTex = nodeTexture("rgba(255,238,175,1)", "rgba(234,179,8,0.55)");
+  const blueTex = nodeTexture("rgba(200,220,255,1)", "rgba(61,125,255,0.55)");
+
+  const primaryIdx = [0, 3, 7, 10, 13, 17, 20, 24, 25, 29, 32, 34];
+  const primaryNodes = [], secondaryNodes = [];
+  locations.forEach(([lat, lng], i) => {
+    const primary = primaryIdx.includes(i);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: primary ? goldTex : blueTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+    sprite.position.copy(latLngToVector3(lat, lng, GLOBE_RADIUS * 1.02));
+    sprite.scale.set(primary ? 0.26 : 0.16, primary ? 0.26 : 0.16, 1);
+    earthGroup.add(sprite);
+    (primary ? primaryNodes : secondaryNodes).push(sprite);
+  });
+
+  /* ── Arcs + traveling light ── */
+  const arcs = [], travelers = [];
+  function createArc(a, b, color, opacity, height, kind) {
+    const s = latLngToVector3(a[0], a[1], GLOBE_RADIUS * 1.015), e = latLngToVector3(b[0], b[1], GLOBE_RADIUS * 1.015);
+    const mid = s.clone().add(e).normalize().multiplyScalar(GLOBE_RADIUS + height + s.distanceTo(e) * 0.12);
+    const curve = new THREE.QuadraticBezierCurve3(s, mid, e);
+    const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false });
+    earthGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(64)), material));
+    arcs.push({ curve, material, base: opacity, kind });
+  }
+  [[[12.97,77.59],[35.67,139.65]],[[12.97,77.59],[51.50,-0.12]],[[12.97,77.59],[40.71,-74.00]],[[51.50,-0.12],[40.71,-74.00]],
+   [[35.67,139.65],[-33.86,151.20]],[[1.35,103.82],[37.56,126.97]],[[48.85,2.35],[1.35,103.82]],[[52.52,13.40],[55.75,37.61]],
+   [[37.77,-122.42],[35.67,139.65]],[[25.20,55.27],[12.97,77.59]],[[40.71,-74.00],[25.76,-80.19]],[[51.50,-0.12],[59.33,18.06]],
+   [[41.90,12.49],[41.01,28.98]],[[22.39,114.11],[13.75,100.52]],[[-33.86,151.20],[-37.81,144.96]],[[6.52,3.37],[30.04,31.23]],
+   [[-1.29,36.82],[25.20,55.27]],[[34.05,-118.24],[19.43,-99.13]],[[43.65,-79.38],[41.88,-87.63]],[[40.42,-3.70],[33.59,-7.61]]
+  ].forEach(([a, b]) => createArc(a, b, blue, 0.20, 0.35, "blue"));
+  [[[12.97,77.59],[22.39,114.11]],[[51.50,-0.12],[52.52,13.40]],[[40.71,-74.00],[37.77,-122.42]],[[25.20,55.27],[41.01,28.98]],
+   [[-33.86,151.20],[1.35,103.82]],[[48.85,2.35],[40.42,-3.70]],[[-23.55,-46.63],[40.71,-74.00]],[[24.71,46.67],[19.07,72.87]]
+  ].forEach(([a, b]) => createArc(a, b, gold, 0.26, 0.45, "gold"));
+
+  arcs.forEach((arc, i) => {
+    if (i % 2) return;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: arc.kind === "gold" ? goldTex : blueTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+    sprite.scale.set(0.08, 0.08, 1);
+    earthGroup.add(sprite);
+    travelers.push({ sprite, curve: arc.curve, t: Math.random(), speed: 0.12 + Math.random() * 0.18, dir: Math.random() > 0.5 ? 1 : -1 });
+  });
+
+  /* ── Orbital rings ── */
+  function ring(rx, ry, tx, ty, tz, opacity, color) {
+    const pts = new THREE.EllipseCurve(0, 0, rx, ry, 0, Math.PI * 2, false, 0).getPoints(160).map(p => new THREE.Vector3(p.x, p.y, 0));
+    const r = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false }));
+    r.rotation.set(tx, ty, tz); earthGroup.add(r); return r;
+  }
+  const rings = [
+    ring(GLOBE_RADIUS * 1.35, GLOBE_RADIUS * 1.30, 0.8, 0.3, 0.1, 0.12, 0x2c5fd6),
+    ring(GLOBE_RADIUS * 1.45, GLOBE_RADIUS * 1.38, -0.5, 0.7, -0.2, 0.08, 0x234aa3),
+    ring(GLOBE_RADIUS * 1.55, GLOBE_RADIUS * 1.50, 1.2, -0.4, 0.5, 0.06, 0x1b3a80),
+    ring(GLOBE_RADIUS * 1.25, GLOBE_RADIUS * 1.20, -0.3, -0.6, 0.8, 0.09, 0x2c5fd6)
+  ];
+
+  /* ── Starfield + dust ── */
+  function points(count, minR, maxR, size, opacity, color, tinted) {
+    const pos = [], col = [];
+    for (let i = 0; i < count; i++) {
+      const r = minR + Math.random() * (maxR - minR), th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+      pos.push(r * Math.sin(ph) * Math.cos(th), r * Math.sin(ph) * Math.sin(th), r * Math.cos(ph));
+      if (tinted) { const b = 0.3 + Math.random() * 0.7, blueish = Math.random() > 0.7; col.push(blueish ? b * 0.7 : b, blueish ? b * 0.85 : b, b); }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    if (tinted) geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    return new THREE.Points(geo, new THREE.PointsMaterial({ size, transparent: true, opacity, color: tinted ? 0xffffff : color, vertexColors: !!tinted, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+  }
+  const nearStars = points(Math.round(300 * Q), 4, 8, 0.035, 0.8, 0, true);
+  const midStars  = points(Math.round(600 * Q), 8, 20, 0.025, 0.6, 0, true);
+  const farStars  = points(Math.round(1500 * Q), 20, 60, 0.015, 0.4, 0, true);
+  scene.add(nearStars, midStars, farStars);
+  const blueDust = points(Math.round(380 * Q), GLOBE_RADIUS * 1.05, GLOBE_RADIUS * 2.0, 0.025, 0.5, blue);
+  const goldDust = points(Math.round(50 * Q), GLOBE_RADIUS * 1.1, GLOBE_RADIUS * 1.6, 0.028, 0.35, gold);
+  earthGroup.add(blueDust, goldDust);
+  const nebula = points(Math.round(200 * Q), GLOBE_RADIUS * 2.0, GLOBE_RADIUS * 4.0, 0.06, 0.18, 0x1a2f66);
+  scene.add(nebula);
+
+  /* ── Placement: centre the globe in the free zone right of the panel ── */
+  function placeGlobe() {
+    const W = window.innerWidth, H = window.innerHeight;
+    const halfH = CAM_Z * Math.tan(THREE.MathUtils.degToRad(CAM_FOV / 2)), halfW = halfH * (W / H);
+    const pxPerUnit = H / (2 * halfH);
+    let cx, cy, fitW, fitH;
+    if (W <= 980) { cx = W / 2; cy = H / 2; fitW = W * 0.9; fitH = H * 0.62; }
+    else {
+      const r = zone.getBoundingClientRect();
+      cx = r.left + r.width / 2; cy = r.top + r.height * 0.42; fitW = r.width * 0.94; fitH = r.height * 0.68;
+    }
+    const diamPx = GLOBE_RADIUS * 1.15 * 2 * pxPerUnit;
+    const s = Math.max(0.4, Math.min(1.1, fitW / diamPx, fitH / diamPx));
+    earthGroup.scale.setScalar(s);
+    earthGroup.position.set((cx / W - 0.5) * 2 * halfW, -(cy / H - 0.5) * 2 * halfH, 0);
+    glow.style.setProperty("--gx", cx + "px");
+    glow.style.setProperty("--gy", cy + "px");
+    glow.style.setProperty("--gd", Math.round(diamPx * s * 1.9) + "px");
+  }
+
+  function resize() {
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    placeGlobe();
+    if (!running) renderOnce();
+  }
+
+  /* ── Animation (delta-time based, pausable) ── */
+  let mouseX = 0, mouseY = 0;
+  if (!reduceMotion && window.matchMedia("(pointer: fine)").matches) {
+    window.addEventListener("mousemove", (e) => { mouseX = e.clientX / window.innerWidth - 0.5; mouseY = e.clientY / window.innerHeight - 0.5; }, { passive: true });
+  }
+
+  function update(dt, t) {
+    const k = dt * 60;
+    earthGroup.rotation.y += 0.0018 * k;
+    earthGroup.rotation.x += (-mouseY * 0.08 - earthGroup.rotation.x) * Math.min(0.01 * k, 1);
+    atmosphereMat.uniforms.uTime.value = t;
+
+    primaryNodes.forEach((n, i) => { const p = t * 2.5 + i * 0.5, s = 0.26 * (1 + Math.sin(p) * 0.3); n.scale.set(s, s, 1); n.material.opacity = 0.7 + Math.sin(p) * 0.3; });
+    secondaryNodes.forEach((n, i) => { const p = t * 1.8 + i * 0.7, s = 0.16 * (1 + Math.sin(p) * 0.2); n.scale.set(s, s, 1); n.material.opacity = 0.5 + Math.sin(p) * 0.2; });
+
+    travelers.forEach(p => {
+      p.t += p.speed * p.dir * dt;
+      if (p.t > 1) p.t = 0; if (p.t < 0) p.t = 1;
+      p.sprite.position.copy(p.curve.getPointAt(p.t));
+      p.sprite.material.opacity = Math.sin(p.t * Math.PI) * 0.8;
+    });
+
+    nearStars.rotation.y += 0.00008 * k; midStars.rotation.y += 0.00004 * k; farStars.rotation.y -= 0.00002 * k;
+    blueDust.rotation.y += 0.00025 * k; blueDust.rotation.x = Math.sin(t * 0.1) * 0.02;
+    goldDust.rotation.y -= 0.0003 * k;
+    nebula.rotation.y += 0.00005 * k; nebula.rotation.x = Math.sin(t * 0.05) * 0.01;
+    rings[0].rotation.z += 0.0003 * k; rings[1].rotation.z -= 0.0002 * k; rings[2].rotation.z += 0.00015 * k; rings[3].rotation.z -= 0.00025 * k;
+
+    arcs.forEach((a, i) => { a.material.opacity = a.base * (0.7 + Math.sin(t * 0.8 + i * 0.3) * 0.3); });
+  }
+
+  let running = false, raf = 0, last = 0, time = 0;
+  function frame(now) {
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min((now - last) / 1000, 0.1); last = now; time += dt;
+    update(dt, time);
+    renderer.render(scene, camera);
+  }
+  function start() { if (running || reduceMotion) return; running = true; last = performance.now(); raf = requestAnimationFrame(frame); }
+  function stop() { running = false; cancelAnimationFrame(raf); }
+  function renderOnce() { update(0, time); renderer.render(scene, camera); }
+
+  document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
+  window.addEventListener("resize", resize);
+  window.addEventListener("load", resize);
+  if (window.ResizeObserver) new ResizeObserver(() => { placeGlobe(); if (!running) renderOnce(); }).observe(zone);
+  window.addEventListener("pagehide", () => { stop(); renderer.dispose(); });
+
+  resize();
+  if (reduceMotion) renderOnce(); else start();
+}
+</script>
+
+<!-- ═════════════════════════════════════════════════════════
+     AUTH  (Firebase logic unchanged — Google wired to both panes)
+══════════════════════════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  updateProfile, sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDU_4-R3s9Ufyv2tZCvF9ZZrTXQ7yf059Q",
+  authDomain: "careercompass-dev-fbc26.firebaseapp.com",
+  projectId: "careercompass-dev-fbc26",
+  storageBucket: "careercompass-dev-fbc26.firebasestorage.app",
+  messagingSenderId: "355431277258",
+  appId: "1:355431277258:web:2e2f8315877a6fbdc30a33"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const activeMode = () => document.getElementById("authTabs").dataset.mode;   // "login" | "register"
+function showErr(boxId, textId, msg) { document.getElementById(textId).textContent = msg; document.getElementById(boxId).classList.add("show"); }
+function clearErr(boxId) { document.getElementById(boxId).classList.remove("show"); }
+
+async function completeLogin(idToken) {
+  const r = await fetch("/auth/session-login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken }) });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || "Login failed");
+  if (typeof navigateWithTransition === "function") navigateWithTransition(d.next);
+  else window.location.href = d.next;
+}
+
+function friendlyError(e) {
+  const map = {
+    "auth/email-already-in-use": "An account with this email already exists — try signing in instead.",
+    "auth/weak-password": "Password should be at least 6 characters.",
+    "auth/invalid-email": "That doesn't look like a valid email address.",
+    "auth/user-not-found": "No account found with that email — try creating one instead.",
+    "auth/wrong-password": "Incorrect password.",
+    "auth/invalid-credential": "Incorrect email or password.",
+    "auth/too-many-requests": "Too many attempts — wait a moment and try again.",
+    "auth/popup-closed-by-user": "Sign-in was cancelled.",
+  };
+  return map[e.code] || e.message || "Something went wrong — try again.";
+}
+
+async function handleGoogleSignIn(btn) {
+  clearErr("loginErr"); clearErr("registerErr");
+  btn.disabled = true;
+  try {
+    const result = await signInWithPopup(auth, new GoogleAuthProvider());
+    await completeLogin(await result.user.getIdToken());
+  } catch (e) {
+    const reg = activeMode() === "register";
+    showErr(reg ? "registerErr" : "loginErr", reg ? "registerErrText" : "loginErrText", friendlyError(e));
+    btn.disabled = false;
+  }
+}
+document.getElementById("googleLoginBtn").addEventListener("click", (e) => handleGoogleSignIn(e.currentTarget));
+document.getElementById("googleRegisterBtn").addEventListener("click", (e) => handleGoogleSignIn(e.currentTarget));
+
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); clearErr("loginErr");
+  const btn = document.getElementById("loginSubmitBtn"), label = btn.querySelector("span");
+  btn.disabled = true; label.textContent = "Signing in…";
+  try {
+    const cred = await signInWithEmailAndPassword(auth, document.getElementById("loginEmail").value.trim(), document.getElementById("loginPassword").value);
+    await completeLogin(await cred.user.getIdToken());
+  } catch (err) {
+    showErr("loginErr", "loginErrText", friendlyError(err));
+    btn.disabled = false; label.textContent = "Sign In";
+  }
+});
+
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); clearErr("registerErr");
+  const btn = document.getElementById("registerSubmitBtn"), label = btn.querySelector("span");
+  btn.disabled = true; label.textContent = "Creating account…";
+  try {
+    const name = document.getElementById("registerName").value.trim();
+    const cred = await createUserWithEmailAndPassword(auth, document.getElementById("registerEmail").value.trim(), document.getElementById("registerPassword").value);
+    if (name) await updateProfile(cred.user, { displayName: name });
+    await completeLogin(await cred.user.getIdToken());
+  } catch (err) {
+    showErr("registerErr", "registerErrText", friendlyError(err));
+    btn.disabled = false; label.textContent = "Create Account";
+  }
+});
+
+document.getElementById("forgotPasswordLink").addEventListener("click", async (e) => {
+  e.preventDefault(); clearErr("loginErr");
+  const email = document.getElementById("loginEmail").value.trim();
+  if (!email) { showErr("loginErr", "loginErrText", 'Enter your email above first, then click "Forgot password?" again.'); return; }
+  try { await sendPasswordResetEmail(auth, email); showToast("Password reset email sent — check your inbox."); }
+  catch (err) { showErr("loginErr", "loginErrText", friendlyError(err)); }
+});
+</script>
+
+<!-- ═════════════════════════════════════════════════════════
+     PANEL BEHAVIOUR — tab pill, sliding panes, height morph, show/hide password
+══════════════════════════════════════════════════════════ -->
+<script>
+(() => {
+  const tabs = document.getElementById("authTabs");
+  const viewport = document.getElementById("paneViewport");
+  const tabLogin = document.getElementById("tabLogin");
+  const tabRegister = document.getElementById("tabRegister");
+  const paneLogin = document.getElementById("paneLogin");
+  const paneRegister = document.getElementById("paneRegister");
+  let mode = "login";
+
+  const fit = () => { viewport.style.height = (mode === "login" ? paneLogin : paneRegister).offsetHeight + "px"; };
+
+  function setMode(next, focus = true) {
+    mode = next;
+    tabs.dataset.mode = next; viewport.dataset.mode = next;
+    tabLogin.setAttribute("aria-selected", next === "login");
+    tabRegister.setAttribute("aria-selected", next === "register");
+    paneLogin.toggleAttribute("inert", next !== "login");
+    paneRegister.toggleAttribute("inert", next !== "register");
+    paneLogin.setAttribute("aria-hidden", next !== "login");
+    paneRegister.setAttribute("aria-hidden", next !== "register");
+    fit();
+    history.replaceState(null, "", next === "register" ? "#register" : location.pathname + location.search);
+    if (focus) setTimeout(() => document.getElementById(next === "login" ? "loginEmail" : "registerName").focus({ preventScroll: true }), 450);
+  }
+
+  tabLogin.addEventListener("click", () => setMode("login"));
+  tabRegister.addEventListener("click", () => setMode("register"));
+  document.querySelectorAll("[data-switch]").forEach(a => a.addEventListener("click", (e) => { e.preventDefault(); setMode(a.dataset.switch); }));
+
+  document.querySelectorAll(".pw-toggle").forEach(btn => btn.addEventListener("click", () => {
+    const input = btn.parentElement.querySelector("input");
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    btn.querySelector("i").className = show ? "bx bx-hide" : "bx bx-show";
+    btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+  }));
+
+  // Keep the block's height in step with its content (errors appearing, fonts loading, resizes)
+  if (window.ResizeObserver) { const ro = new ResizeObserver(fit); ro.observe(paneLogin); ro.observe(paneRegister); }
+  window.addEventListener("load", fit);
+
+  setMode(location.hash === "#register" ? "register" : "login", false);
+})();
+</script>
+{% endblock %}

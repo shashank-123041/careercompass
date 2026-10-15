@@ -1,0 +1,721 @@
+{% extends "base.html" %}
+{% block title %}Opportunities — CareerCompass{% endblock %}
+
+{% block extra_css %}
+.page-hero {
+  padding: 2.5rem 0 1.75rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.75rem;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: 1.5rem;
+}
+.search-bar {
+  display: flex; align-items: center; gap: 0.6rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 0.6rem 1.1rem; min-width: 280px;
+  transition: border-color 0.2s var(--ease);
+}
+.search-bar:focus-within { border-color: var(--accent); }
+.search-bar i { color: var(--text3); font-size: 1rem; }
+.search-bar input {
+  background: none; border: none; outline: none; color: var(--text);
+  font-family: var(--font); font-size: 0.9rem; flex: 1;
+}
+.search-bar input::placeholder { color: var(--text3); }
+
+/* ══════════════════════════════════════════════
+   LAYOUT — left filter sidebar + results column
+════════════════════════════════════════════ */
+.opp-layout { display: grid; grid-template-columns: 264px 1fr; gap: 1.75rem; align-items: start; }
+
+.filter-sidebar {
+  position: sticky; top: 76px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1.1rem;
+  display: flex; flex-direction: column; gap: 1.4rem;
+  max-height: calc(100vh - 100px); overflow-y: auto;
+}
+
+/* ── Mode segmented toggle (item 6) ── */
+.mode-toggle { position: relative; display: flex; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 4px; }
+.mode-btn {
+  position: relative; z-index: 2; flex: 1; background: none; border: none;
+  color: var(--text2); font-weight: 600; font-size: 0.8rem; padding: 0.65rem 0.4rem;
+  border-radius: 9px; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; gap: 6px; font-family: var(--font);
+  transition: color 0.25s var(--ease);
+}
+.mode-btn i { font-size: 1rem; }
+.mode-btn.active { color: #fff; }
+.mode-pill {
+  position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: calc(100% - 8px);
+  background: var(--accent); border-radius: 9px; z-index: 1;
+  transition: transform 0.32s var(--ease); box-shadow: 0 4px 16px rgba(61,125,255,.32);
+}
+.mode-pill.rec { transform: translateX(100%); }
+
+.filter-group-title {
+  font-size: 0.68rem; font-family: var(--mono); color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; padding: 0 0.2rem;
+}
+
+.type-tab {
+  display: flex; align-items: center; gap: 10px; padding: 0.62rem 0.75rem;
+  border-radius: 9px; cursor: pointer; color: var(--text2); font-size: 0.84rem;
+  font-weight: 500; transition: all 0.18s var(--ease);
+}
+.type-tab i { font-size: 1.05rem; width: 18px; text-align: center; color: var(--text3); flex-shrink: 0; }
+.type-tab:hover { background: var(--bg3); color: var(--text); }
+.type-tab.active { background: var(--accent-dim); color: var(--accent2); font-weight: 700; }
+.type-tab.active i { color: var(--accent2); }
+.type-tab .cnt { margin-left: auto; font-family: var(--mono); font-size: 0.72rem; color: var(--text3); }
+
+.switch-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 0.75rem; border-radius: 9px; cursor: pointer; color: var(--text2);
+  font-size: 0.84rem; transition: background 0.18s var(--ease);
+}
+.switch-row:hover { background: var(--bg3); }
+.switch-row span:first-child { display: flex; align-items: center; gap: 9px; }
+.switch-row i { font-size: 1.05rem; color: var(--text3); }
+.switch { width: 38px; height: 22px; background: var(--border2); border-radius: 20px; position: relative; flex-shrink: 0; transition: background 0.25s var(--ease); }
+.switch-knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--text2); transition: transform 0.25s var(--ease), background 0.25s var(--ease); }
+.switch-row.active .switch { background: var(--accent); }
+.switch-row.active .switch-knob { transform: translateX(16px); background: #fff; }
+
+.skill-filter-active {
+  display: flex; align-items: center; gap: 8px; padding: 0.55rem 0.5rem 0.55rem 0.9rem;
+  border-radius: 9px; font-size: 0.8rem; font-weight: 600;
+  background: var(--accent-dim); border: 1px solid rgba(61,125,255,.3); color: var(--accent2);
+}
+.skill-filter-active button {
+  margin-left: auto; background: none; border: none; color: var(--accent2); cursor: pointer;
+  font-size: 1.1rem; line-height: 1; opacity: 0.75; padding: 2px;
+}
+.skill-filter-active button:hover { opacity: 1; }
+
+.clear-filters-link {
+  font-size: 0.78rem; color: var(--text3); text-align: center; cursor: pointer;
+  padding-top: 0.3rem; border-top: 1px solid var(--border); margin-top: 0.2rem;
+}
+.clear-filters-link:hover { color: var(--accent2); }
+
+.mobile-filter-btn { display: none; }
+.filter-backdrop { display: none; }
+
+@media (max-width: 900px) {
+  .opp-layout { grid-template-columns: 1fr; }
+  .filter-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 290px; max-height: none;
+    z-index: 400; border-radius: 0; border-right: 1px solid var(--border);
+    transform: translateX(-100%); transition: transform 0.3s var(--ease);
+  }
+  .filter-sidebar.open { transform: translateX(0); }
+  .mobile-filter-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border2); color: var(--text);
+    padding: 0.55rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; margin-bottom: 1.25rem;
+  }
+  .filter-backdrop {
+    display: block; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    backdrop-filter: blur(2px); z-index: 399; opacity: 0; pointer-events: none;
+    transition: opacity 0.25s var(--ease);
+  }
+  .filter-backdrop.show { opacity: 1; pointer-events: auto; }
+}
+
+/* Sync status strip */
+.sync-strip {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 0.6rem 1rem; margin-bottom: 1.5rem; font-size: 0.8rem; color: var(--text3);
+}
+.sync-strip i { font-size: 0.95rem; }
+.sync-strip .refresh-link {
+  margin-left: auto; color: var(--accent2); font-weight: 600; cursor: pointer;
+  background: none; border: none; font-family: var(--font); font-size: 0.8rem;
+  display: flex; align-items: center; gap: 6px;
+}
+.sync-strip .refresh-link:hover { text-decoration: underline; }
+.sync-strip .refresh-link:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
+.sync-strip .refresh-link i.spin { animation: spin 0.9s linear infinite; }
+
+.fallback-note {
+  background: var(--gold-dim); border: 1px solid rgba(234,179,8,.28);
+  border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--gold2);
+  margin-bottom: 1.25rem; display: none; align-items: center; gap: 8px;
+}
+
+.rec-banner {
+  display: none; align-items: center; gap: 8px;
+  background: var(--accent-dim); border: 1px solid rgba(61,125,255,.28); border-radius: 8px;
+  padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--accent2); margin-bottom: 1.25rem;
+}
+
+/* Card grid — responsive, no longer locked to 4 columns since a sidebar
+   now occupies the left side of the page */
+.opp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.opp-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 1.3rem 1.4rem; display: flex; flex-direction: column; gap: 0.7rem;
+  text-decoration: none; transition: all 0.22s var(--ease); position: relative; overflow: hidden;
+}
+.opp-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  opacity: 0; transition: opacity 0.2s var(--ease);
+}
+.opp-card[data-type="hackathon"]::before  { background: linear-gradient(90deg, var(--gold), transparent); }
+.opp-card[data-type="internship"]::before { background: linear-gradient(90deg, var(--accent), transparent); }
+.opp-card[data-type="job"]::before        { background: linear-gradient(90deg, var(--green), transparent); }
+.opp-card[data-type="techfest"]::before   { background: linear-gradient(90deg, var(--purple), transparent); }
+.opp-card[data-type="workshop"]::before   { background: linear-gradient(90deg, #ef4444, transparent); }
+.opp-card:hover::before { opacity: 1; }
+.opp-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 14px 36px rgba(0,0,0,0.4); }
+
+.opp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.opp-type-badge {
+  font-size: 0.66rem; font-weight: 700; padding: 0.22rem 0.6rem; border-radius: 6px;
+  letter-spacing: 0.04em; font-family: var(--mono); text-transform: uppercase; white-space: nowrap;
+}
+.opp-type-badge.hackathon  { background: var(--gold-dim); color: var(--gold2); }
+.opp-type-badge.internship { background: var(--accent-dim); color: var(--accent2); }
+.opp-type-badge.job        { background: var(--green-dim); color: var(--green); }
+.opp-type-badge.techfest   { background: var(--purple-dim); color: var(--purple); }
+.opp-type-badge.workshop   { background: rgba(239,68,68,.12); color: #ef4444; }
+.opp-source { font-size: 0.72rem; color: var(--text3); font-family: var(--mono); white-space: nowrap; }
+.fallback-pill {
+  font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 4px;
+  background: var(--surface2); color: var(--text3); letter-spacing: 0.03em; white-space: nowrap;
+}
+
+.opp-title { font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1.35; letter-spacing: -0.01em; }
+.opp-org { font-size: 0.83rem; color: var(--text2); }
+
+.opp-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; font-size: 0.78rem; color: var(--text3); }
+.opp-meta span { display: flex; align-items: center; gap: 5px; }
+.opp-meta i { font-size: 0.95rem; }
+.opp-meta .remote-tag { color: var(--green); font-weight: 600; }
+.opp-deadline { font-weight: 600; }
+.opp-deadline.urgent { color: #ef4444; }
+.opp-deadline.soon { color: var(--gold2); }
+
+.opp-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.1rem; }
+.opp-tag {
+  font-size: 0.7rem; padding: 0.15rem 0.55rem; border-radius: 5px;
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+  font-family: var(--mono); cursor: pointer; transition: all 0.15s var(--ease);
+}
+.opp-tag:hover { border-color: var(--accent); color: var(--accent2); }
+
+.opp-foot {
+  margin-top: auto; padding-top: 0.65rem; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.opp-comp { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+.opp-view { font-size: 0.78rem; color: var(--accent2); font-weight: 600; }
+
+.opp-actions { display: flex; align-items: center; gap: 6px; }
+.opp-action-btn {
+  width: 27px; height: 27px; border-radius: 7px; display: flex;
+  align-items: center; justify-content: center; font-size: 0.95rem;
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text3);
+  cursor: pointer; transition: all 0.15s var(--ease); padding: 0; line-height: 1;
+}
+.opp-action-btn:hover { border-color: var(--border2); color: var(--text); }
+.opp-action-btn.bookmark.active { border-color: rgba(234,179,8,.4); background: var(--gold-dim); color: var(--gold2); }
+.opp-action-btn.dismiss:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
+.opp-card.dismissing { opacity: 0.35; transform: scale(0.97); pointer-events: none; transition: all 0.25s var(--ease); }
+
+.state { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 3.5rem 2rem; text-align: center; }
+.state i.state-icon { font-size: 2rem; color: var(--text3); margin-bottom: 0.75rem; display: block; }
+.state p { color: var(--text2); font-size: 0.9rem; line-height: 1.6; }
+.state .sub { color: var(--text3); font-size: 0.8rem; margin-top: 0.4rem; }
+
+.pagination-bar { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; margin: 2rem 0 1rem; }
+.pagination-controls { display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex-wrap: wrap; }
+.page-btn {
+  min-width: 36px; height: 36px; padding: 0 0.7rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text2); font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  transition: all 0.15s var(--ease); font-family: var(--font);
+}
+.page-btn:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+.page-btn.active { background: var(--accent-dim); border-color: rgba(61,125,255,.4); color: var(--accent2); cursor: default; }
+.page-btn:disabled { opacity: 0.35; cursor: default; }
+.page-info { font-size: 0.78rem; color: var(--text3); font-family: var(--mono); text-align: center; }
+{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="section-header" style="margin-bottom:0">
+    <div class="eyebrow">OPPORTUNITY FINDER</div>
+    <h1>Hackathons, Internships &amp; More</h1>
+    <p>Live listings matched to what you're learning</p>
+  </div>
+  <div class="search-bar">
+    <i class='bx bx-search'></i>
+    <input type="text" id="searchInput" placeholder="Search opportunities..." autocomplete="off">
+  </div>
+</div>
+
+<button class="mobile-filter-btn" id="mobileFilterBtn"><i class='bx bx-filter-alt'></i> Filters</button>
+<div class="filter-backdrop" id="filterBackdrop"></div>
+
+<div class="opp-layout">
+
+  <aside class="filter-sidebar" id="filterSidebar">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="modeAllBtn" type="button"><i class='bx bx-grid-alt'></i> All</button>
+      <button class="mode-btn" id="modeRecBtn" type="button"><i class='bx bx-target-lock'></i> Recommended</button>
+      <span class="mode-pill" id="modePill"></span>
+    </div>
+
+    <div class="filter-group" id="typeTabs">
+      <div class="filter-group-title">Type</div>
+      <div class="type-tab active" data-type="">
+        <i class='bx bx-grid-alt'></i><span>All</span><span class="cnt" id="cnt-all"></span>
+      </div>
+      <div class="type-tab" data-type="hackathon">
+        <i class='bx bxs-trophy'></i><span>Hackathons</span><span class="cnt" id="cnt-hackathon"></span>
+      </div>
+      <div class="type-tab" data-type="internship">
+        <i class='bx bxs-briefcase'></i><span>Internships</span><span class="cnt" id="cnt-internship"></span>
+      </div>
+      <div class="type-tab" data-type="job">
+        <i class='bx bx-laptop'></i><span>Jobs</span><span class="cnt" id="cnt-job"></span>
+      </div>
+      <div class="type-tab" data-type="techfest">
+        <i class='bx bxs-graduation'></i><span>Tech Fests</span><span class="cnt" id="cnt-techfest"></span>
+      </div>
+      <div class="type-tab" data-type="workshop">
+        <i class='bx bx-wrench'></i><span>Workshops</span><span class="cnt" id="cnt-workshop"></span>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Location</div>
+      <label class="switch-row" id="remoteToggle">
+        <span><i class='bx bx-globe'></i> Remote only</span>
+        <span class="switch"><span class="switch-knob"></span></span>
+      </label>
+    </div>
+
+    <div id="skillFilterChip" style="display:none"></div>
+
+    <div class="clear-filters-link" id="clearFiltersLink">Clear all filters</div>
+  </aside>
+
+  <div class="opp-main">
+    <div class="rec-banner" id="recBanner">
+      <i class='bx bx-target-lock'></i> Showing opportunities matched to your resume skills.
+    </div>
+
+    <div class="sync-strip">
+      <i class='bx bx-sync'></i>
+      <span id="syncLabel">Checking sync status…</span>
+      <button class="refresh-link" id="refreshBtn"><i class='bx bx-refresh'></i> Refresh now</button>
+    </div>
+
+    <div class="fallback-note" id="fallbackNote">
+      <i class='bx bxs-info-circle'></i> Some listings below are curated fallback data — live sources for that category are temporarily unreachable.
+    </div>
+
+    <div class="state" id="stLoading"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading opportunities…</p></div>
+    <div class="state" id="stEmpty" style="display:none;border-style:dashed">
+      <i class='bx bx-search state-icon'></i>
+      <p>No opportunities match your filters.</p>
+      <p class="sub">Try clearing the search or switching filters.</p>
+    </div>
+    <div class="state err" id="stError" style="display:none">
+      <i class='bx bxs-error-circle state-icon'></i>
+      <p>Could not load opportunities.</p>
+      <p class="sub">Try refreshing, or check the <a href="/admin" style="color:var(--accent2)">sync dashboard</a>.</p>
+    </div>
+    <div class="state" id="stNotLoggedIn" style="display:none;border-style:dashed">
+      <i class='bx bx-lock-alt state-icon'></i>
+      <p>Sign in to see opportunities matched to your resume.</p>
+      <p class="sub"><a href="/login" style="color:var(--accent2)">Sign in →</a></p>
+    </div>
+    <div class="state" id="stNoSkills" style="display:none;border-style:dashed">
+      <i class='bx bx-file-blank state-icon'></i>
+      <p>We don't have any skills on file for you yet.</p>
+      <p class="sub">Upload your resume or add skills manually to see matches. <a href="/profile" style="color:var(--accent2)">Update skills →</a></p>
+    </div>
+    <div class="state" id="stNoTaxonomyMatch" style="display:none;border-style:dashed">
+      <i class='bx bx-search state-icon'></i>
+      <p>None of your listed skills matched our opportunity categories yet.</p>
+      <p class="sub">Try adding more common technical skills. <a href="/profile" style="color:var(--accent2)">Update skills →</a></p>
+    </div>
+
+    <div class="opp-grid" id="oppGrid"></div>
+    <div class="pagination-bar" id="paginationBar"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentType   = '';
+let remoteOnly    = false;
+let skillFilter   = null;
+let searchQuery   = '';
+let allCounts     = {};
+let recommendedMode = false;
+let recFetchReason  = null;
+const bookmarkedIds = new Set();
+
+const PAGE_SIZE   = 20;
+let allItems      = [];
+let currentPage   = 1;
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function logInteraction(oppId, eventType) {
+  if (!recommendedMode) return;
+  fetch(`/api/v2/opportunities/${oppId}/interact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event_type: eventType }),
+  }).catch(() => {});
+}
+
+function bookmarkOpportunity(oppId, evt) {
+  evt.stopPropagation();
+  evt.preventDefault();
+  const btn = evt.currentTarget;
+  const alreadyBookmarked = bookmarkedIds.has(oppId);
+  if (alreadyBookmarked) {
+    bookmarkedIds.delete(oppId);
+    btn.classList.remove('active');
+    btn.querySelector('i').className = 'bx bx-bookmark';
+  } else {
+    bookmarkedIds.add(oppId);
+    btn.classList.add('active');
+    btn.querySelector('i').className = 'bx bxs-bookmark';
+    logInteraction(oppId, 'bookmarked');
+  }
+}
+
+function dismissOpportunity(oppId, evt) {
+  evt.stopPropagation();
+  evt.preventDefault();
+  logInteraction(oppId, 'dismissed');
+  const card = evt.currentTarget.closest('.opp-card');
+  if (card) card.classList.add('dismissing');
+  allItems = allItems.filter(o => o.id !== oppId);
+  setTimeout(() => { if (card) card.remove(); }, 250);
+}
+
+async function fetchOpportunities() {
+  recFetchReason = null;
+
+  if (recommendedMode) {
+    const res = await fetch('/api/v2/opportunities/match/me');
+    if (res.status === 401) { recFetchReason = 'not_logged_in'; return []; }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    if (d.reason) { recFetchReason = d.reason; return []; }
+    let items = d.opportunities || [];
+    if (currentType) items = items.filter(o => o.opp_type === currentType);
+    if (remoteOnly) items = items.filter(o => o.is_remote);
+    return items;
+  }
+
+  const params = new URLSearchParams();
+  if (currentType) params.set('type', currentType);
+  if (remoteOnly) params.set('remote', 'true');
+  if (skillFilter) params.set('skill', skillFilter);
+  params.set('include_fallback', 'true');
+
+  const res = await fetch('/api/v2/opportunities/?' + params.toString());
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return (await res.json()).opportunities || [];
+}
+
+async function refreshCounts() {
+  if (recommendedMode) {
+    try {
+      const res = await fetch('/api/v2/opportunities/match/me');
+      if (!res.ok) throw new Error('not ok');
+      const d = await res.json();
+      const items = d.opportunities || [];
+      const counts = { '': items.length, hackathon: 0, internship: 0, job: 0, techfest: 0, workshop: 0 };
+      items.forEach(o => { if (o.opp_type in counts) counts[o.opp_type]++; });
+      allCounts = counts;
+    } catch { allCounts = { '': 0, hackathon: 0, internship: 0, job: 0, techfest: 0, workshop: 0 }; }
+  } else {
+    const types = ['', 'hackathon', 'internship', 'job', 'techfest', 'workshop'];
+    await Promise.all(types.map(async t => {
+      const params = new URLSearchParams({ include_fallback: 'true' });
+      if (t) params.set('type', t);
+      try {
+        const res = await fetch('/api/v2/opportunities/?' + params.toString());
+        const d = await res.json();
+        allCounts[t] = d.count || 0;
+      } catch { allCounts[t] = 0; }
+    }));
+  }
+  document.getElementById('cnt-all').textContent        = allCounts[''] ?? '';
+  document.getElementById('cnt-hackathon').textContent  = allCounts['hackathon'] ?? '';
+  document.getElementById('cnt-internship').textContent = allCounts['internship'] ?? '';
+  document.getElementById('cnt-job').textContent        = allCounts['job'] ?? '';
+  document.getElementById('cnt-techfest').textContent   = allCounts['techfest'] ?? '';
+  document.getElementById('cnt-workshop').textContent   = allCounts['workshop'] ?? '';
+}
+
+function deadlineClass(deadline) {
+  if (!deadline) return '';
+  const days = (new Date(deadline) - new Date()) / 86400000;
+  if (days < 0) return '';
+  if (days <= 3) return 'urgent';
+  if (days <= 10) return 'soon';
+  return '';
+}
+
+function formatDeadline(o) {
+  if (o.deadline) {
+    const d = new Date(o.deadline);
+    const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    return `<span class="opp-deadline ${deadlineClass(o.deadline)}"><i class='bx bx-time-five'></i> ${label}</span>`;
+  }
+  if (o.date_label) return `<span>${esc(o.date_label)}</span>`;
+  return '';
+}
+
+function renderCard(o) {
+  const skillTags = (o.skills || []).slice(0, 5).map(s =>
+    `<span class="opp-tag" onclick="applySkillFilter('${esc(s)}', event)">${esc(s)}</span>`
+  ).join('');
+
+  const actions = recommendedMode ? `
+    <div class="opp-actions">
+      <button type="button" class="opp-action-btn bookmark${bookmarkedIds.has(o.id) ? ' active' : ''}"
+              title="Bookmark" onclick="bookmarkOpportunity(${o.id}, event)">
+        <i class='${bookmarkedIds.has(o.id) ? 'bx bxs-bookmark' : 'bx bx-bookmark'}'></i>
+      </button>
+      <button type="button" class="opp-action-btn dismiss"
+              title="Not interested" onclick="dismissOpportunity(${o.id}, event)"><i class='bx bx-x'></i></button>
+    </div>` : '';
+
+  return `
+    <a href="${o.url}" target="_blank" rel="noopener" class="opp-card" data-type="${o.opp_type}" onclick="logInteraction(${o.id}, 'clicked')">
+      <div class="opp-top">
+        <span class="opp-type-badge ${o.opp_type}">${o.opp_type}</span>
+        <span style="display:flex;align-items:center;gap:6px">
+          ${o.is_fallback ? '<span class="fallback-pill">CURATED</span>' : ''}
+          <span class="opp-source">${esc(o.source)}</span>
+        </span>
+      </div>
+      <div>
+        <div class="opp-title">${esc(o.title)}</div>
+        ${o.org ? `<div class="opp-org">${esc(o.org)}</div>` : ''}
+      </div>
+      <div class="opp-meta">
+        ${o.location ? `<span><i class='bx bx-map-pin'></i> ${esc(o.location)}</span>` : ''}
+        ${o.is_remote ? `<span class="remote-tag"><i class='bx bx-globe'></i> Remote</span>` : (o.work_mode ? `<span>${esc(o.work_mode)}</span>` : '')}
+        ${formatDeadline(o)}
+      </div>
+      ${skillTags ? `<div class="opp-tags">${skillTags}</div>` : ''}
+      <div class="opp-foot">
+        <span class="opp-comp">${esc(o.compensation || o.duration_info || '')}</span>
+        ${actions || '<span class="opp-view">View →</span>'}
+      </div>
+    </a>`;
+}
+
+function applySkillFilter(slug, evt) {
+  if (evt) evt.preventDefault();
+  skillFilter = slug;
+  renderSkillChip();
+  loadAndRender();
+}
+
+function clearSkillFilter() {
+  skillFilter = null;
+  renderSkillChip();
+  loadAndRender();
+}
+
+function renderSkillChip() {
+  const el = document.getElementById('skillFilterChip');
+  if (!skillFilter) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  el.innerHTML = `<div class="skill-filter-active">Skill: ${esc(skillFilter)} <button onclick="clearSkillFilter()"><i class='bx bx-x'></i></button></div>`;
+}
+
+function show(state) {
+  document.getElementById('stLoading').style.display        = state === 'loading'         ? '' : 'none';
+  document.getElementById('stEmpty').style.display           = state === 'empty'           ? '' : 'none';
+  document.getElementById('stError').style.display           = state === 'error'           ? '' : 'none';
+  document.getElementById('stNotLoggedIn').style.display     = state === 'notLoggedIn'     ? '' : 'none';
+  document.getElementById('stNoSkills').style.display        = state === 'noSkills'        ? '' : 'none';
+  document.getElementById('stNoTaxonomyMatch').style.display = state === 'noTaxonomyMatch' ? '' : 'none';
+  document.getElementById('oppGrid').style.display       = state === 'ok' ? '' : 'none';
+  document.getElementById('paginationBar').style.display = state === 'ok' ? '' : 'none';
+}
+
+function renderPage(scrollUp) {
+  const totalPages = Math.max(1, Math.ceil(allItems.length / PAGE_SIZE));
+  currentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = allItems.slice(start, start + PAGE_SIZE);
+  document.getElementById('oppGrid').innerHTML = pageItems.map(renderCard).join('');
+  document.getElementById('paginationBar').innerHTML = buildPagination(totalPages);
+  if (scrollUp) document.querySelector('.page-hero').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function buildPagination(totalPages) {
+  if (totalPages <= 1) return '';
+  const WINDOW = 3;
+  let windowStart = Math.min(Math.max(1, currentPage - 1), Math.max(1, totalPages - WINDOW + 1));
+  const windowEnd = Math.min(totalPages, windowStart + WINDOW - 1);
+  let html = '<div class="pagination-controls">';
+  html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">‹ Prev</button>`;
+  for (let p = windowStart; p <= windowEnd; p++) {
+    html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+  }
+  html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">Next ›</button>`;
+  html += '</div>';
+  html += `<div class="page-info">${allItems.length} total · page ${currentPage} of ${totalPages}</div>`;
+  return html;
+}
+
+function goToPage(p) { currentPage = p; renderPage(true); }
+
+async function loadAndRender() {
+  show('loading');
+  document.getElementById('fallbackNote').style.display = 'none';
+  document.getElementById('recBanner').style.display = recommendedMode ? 'flex' : 'none';
+  try {
+    let items = await fetchOpportunities();
+    if (recFetchReason === 'not_logged_in') { show('notLoggedIn'); return; }
+    if (recFetchReason === 'no_resume_skills') { show('noSkills'); return; }
+    if (recFetchReason === 'no_taxonomy_matches') { show('noTaxonomyMatch'); return; }
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(o =>
+        (o.title || '').toLowerCase().includes(q) ||
+        (o.org || '').toLowerCase().includes(q) ||
+        (o.skills || []).some(s => s.toLowerCase().includes(q))
+      );
+    }
+
+    if (!items.length) { allItems = []; show('empty'); return; }
+    if (items.some(o => o.is_fallback)) document.getElementById('fallbackNote').style.display = 'flex';
+
+    allItems = items;
+    currentPage = 1;
+    renderPage(false);
+    show('ok');
+  } catch (e) {
+    show('error');
+  }
+}
+
+// ── Mode segmented toggle ───────────────────────────────────────────────
+const modeAllBtn = document.getElementById('modeAllBtn');
+const modeRecBtn = document.getElementById('modeRecBtn');
+const modePill = document.getElementById('modePill');
+function setMode(rec) {
+  recommendedMode = rec;
+  modeAllBtn.classList.toggle('active', !rec);
+  modeRecBtn.classList.toggle('active', rec);
+  modePill.classList.toggle('rec', rec);
+  refreshCounts();
+  loadAndRender();
+}
+modeAllBtn.addEventListener('click', () => setMode(false));
+modeRecBtn.addEventListener('click', () => setMode(true));
+
+// Type filter
+document.querySelectorAll('.type-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentType = tab.dataset.type;
+    loadAndRender();
+  });
+});
+
+// Remote toggle
+document.getElementById('remoteToggle').addEventListener('click', function() {
+  remoteOnly = !remoteOnly;
+  this.classList.toggle('active', remoteOnly);
+  loadAndRender();
+});
+
+document.getElementById('clearFiltersLink').addEventListener('click', () => {
+  currentType = ''; remoteOnly = false; skillFilter = null; searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.type-tab').forEach(t => t.classList.toggle('active', t.dataset.type === ''));
+  document.getElementById('remoteToggle').classList.remove('active');
+  renderSkillChip();
+  if (recommendedMode) setMode(false); else loadAndRender();
+});
+
+// Search (debounced)
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  const val = this.value;
+  searchTimer = setTimeout(() => { searchQuery = val; loadAndRender(); }, 250);
+});
+
+// Mobile filter drawer
+const filterSidebar = document.getElementById('filterSidebar');
+const filterBackdrop = document.getElementById('filterBackdrop');
+document.getElementById('mobileFilterBtn').addEventListener('click', () => {
+  filterSidebar.classList.add('open'); filterBackdrop.classList.add('show');
+});
+filterBackdrop.addEventListener('click', () => {
+  filterSidebar.classList.remove('open'); filterBackdrop.classList.remove('show');
+});
+
+// Sync status + manual refresh
+async function pollSyncStatus() {
+  try {
+    const d = await (await fetch('/api/v2/opportunities/sync/status')).json();
+    const live = d.live || {};
+    const label = document.getElementById('syncLabel');
+    const btn = document.getElementById('refreshBtn');
+    if (live.running) {
+      label.textContent = `Syncing ${live.current_source || '…'} (${live.sources_done}/${live.sources_total})`;
+      btn.disabled = true;
+    } else {
+      const status = live.last_status || 'never synced';
+      const when = live.last_completed ? live.last_completed.slice(0, 16) : '';
+      label.textContent = `Last sync: ${status}${when ? ' · ' + when : ''}`;
+      btn.disabled = false;
+      if (live.last_fallback_sources && live.last_fallback_sources.length) {
+        label.textContent += ` · fallback used for: ${live.last_fallback_sources.join(', ')}`;
+      }
+    }
+  } catch (e) {
+    document.getElementById('syncLabel').textContent = 'Sync status unavailable';
+  }
+}
+
+document.getElementById('refreshBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="bx bx-loader-alt spin"></i> Starting…';
+  try {
+    const r = await fetch('/api/v2/opportunities/sync/trigger', { method: 'POST' });
+    const d = await r.json();
+    showToast(d.status === 'started' ? 'Sync started' : d.status);
+  } catch (e) { showToast('Error: ' + e.message); }
+  setTimeout(() => { btn.innerHTML = '<i class="bx bx-refresh"></i> Refresh now'; pollSyncStatus(); loadAndRender(); refreshCounts(); }, 3000);
+});
+
+/* Boot */
+pollSyncStatus();
+setInterval(pollSyncStatus, 15000);
+refreshCounts();
+loadAndRender();
+</script>
+{% endblock %}

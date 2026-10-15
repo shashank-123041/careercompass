@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}Skill Roadmaps — CareerCompass{% endblock %}
+
+{% block extra_css %}
+.page-hero {
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  min-width: 260px;
+  transition: border-color 0.2s;
+}
+
+.search-bar:focus-within { border-color: var(--blue); }
+
+.search-bar input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.search-bar input::placeholder { color: var(--text3); }
+
+/* Filter tabs */
+.filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.filter-tab {
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  transition: all 0.15s;
+}
+
+.filter-tab:hover { border-color: var(--border2); color: var(--text); }
+.filter-tab.active { background: var(--blue-dim); border-color: rgba(59,130,246,0.4); color: var(--blue); }
+
+/* Skills grid — more compact */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 0.85rem;
+}
+
+.skill-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.skill-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--blue-dim) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.skill-card:hover {
+  border-color: rgba(59,130,246,0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+}
+
+.skill-card:hover::after { opacity: 1; }
+
+.skill-icon {
+  width: 42px; height: 42px;
+  min-width: 42px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s;
+}
+
+.skill-card:hover .skill-icon {
+  background: var(--blue-dim);
+  border-color: rgba(59,130,246,0.3);
+}
+
+.skill-info {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.skill-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.skill-desc {
+  font-size: 0.78rem;
+  color: var(--text3);
+  margin-top: 0.2rem;
+}
+
+.skill-arrow {
+  color: var(--text3);
+  font-size: 0.85rem;
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s;
+}
+
+.skill-card:hover .skill-arrow {
+  color: var(--blue);
+  transform: translateX(3px);
+}
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2.5rem 0 1.5rem;
+}
+
+.section-divider h3 {
+  font-size: 0.8rem;
+  font-family: var(--mono);
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.section-divider .line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.no-results {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text3);
+  display: none;
+}
+
+.no-results.show { display: block; }
+{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="section-header" style="margin-bottom:0">
+    <div class="eyebrow">⚡ Skill-Based</div>
+    <h1>Technology Roadmaps</h1>
+    <p>Master a specific technology or language with a curated learning path</p>
+  </div>
+  <div class="search-bar">
+    <span>🔍</span>
+    <input type="text" id="searchInput" placeholder="Search technologies..." autocomplete="off">
+  </div>
+</div>
+
+<div class="section-divider">
+  <h3>All Technologies</h3>
+  <div class="line"></div>
+  <span class="badge badge-blue">{{ roadmaps|length }} roadmaps</span>
+</div>
+
+<div class="skills-grid" id="skillsGrid">
+  {% for r in roadmaps %}
+  <a href="/roadmap/skill/{{ r.slug }}" class="skill-card" data-title="{{ r.title|lower }}">
+    <div class="skill-icon">{{ r.icon }}</div>
+    <div class="skill-info">
+      <div class="skill-title">{{ r.title }}</div>
+      <div class="skill-desc">{{ r.brief_desc or r.description }}</div>
+    </div>
+    <span class="skill-arrow">→</span>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="no-results" id="noResults">
+  <div style="font-size:2.5rem;margin-bottom:1rem">🔍</div>
+  <p>No technologies found matching your search.</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const input = document.getElementById('searchInput');
+  const cards = document.querySelectorAll('.skill-card');
+  const noResults = document.getElementById('noResults');
+
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    let visible = 0;
+    cards.forEach(card => {
+      const title = card.getAttribute('data-title') || '';
+      const match = !q || title.includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    noResults.classList.toggle('show', visible === 0);
+  });
+</script>
+{% endblock %}

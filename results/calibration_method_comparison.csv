@@ -1,0 +1,3 @@
+calibration_method,ece,roles_passing_own_threshold,roles_with_enough_evidence,roles_total
+sigmoid,0.1265,22,22,22
+isotonic,0.0675,22,22,22

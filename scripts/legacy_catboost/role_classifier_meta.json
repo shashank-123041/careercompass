@@ -1,0 +1,64 @@
+{
+  "classes": [
+    "data-engineer",
+    "backend",
+    "frontend",
+    "devops",
+    "cyber-security",
+    "ml-cluster",
+    "qa",
+    "full-stack",
+    "data-analyst",
+    "ux-design",
+    "mlops",
+    "devrel",
+    "postgresql-dba",
+    "network-engineer",
+    "software-architect",
+    "technical-writer",
+    "blockchain",
+    "engineering-manager",
+    "devsecops",
+    "mobile",
+    "game-developer",
+    "product-manager"
+  ],
+  "confidence_threshold_default": 0.35,
+  "confidence_threshold_tier3": 0.55,
+  "tier3_roles": [
+    "devrel",
+    "devsecops",
+    "engineering-manager",
+    "mlops",
+    "network-engineer",
+    "postgresql-dba",
+    "software-architect",
+    "technical-writer",
+    "ux-design"
+  ],
+  "merged_label_map": {
+    "ml-cluster": [
+      "ai-engineer",
+      "ai-data-scientist",
+      "machine-learning"
+    ],
+    "mobile": [
+      "android",
+      "ios"
+    ]
+  },
+  "unroutable_role_slugs_no_data": [
+    "devops-engineer",
+    "server-side-game-developer"
+  ],
+  "text_feature": "skill_tags_text",
+  "cat_features": [
+    "degree_level",
+    "degree_field"
+  ],
+  "num_features": [
+    "years_experience"
+  ],
+  "n_training_rows": 2861,
+  "class_weighting_scheme": "sqrt_balanced"
+}

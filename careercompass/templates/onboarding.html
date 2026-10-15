@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+{% block title %}Get Started — CareerCompass{% endblock %}
+{% block extra_css %}
+.ob-wrap { max-width: 640px; margin: 0 auto; padding: 2.5rem 0 3rem; }
+
+/* ══════════════════════════════════════════════
+   WAYPOINT TRAIL — echoes the roadmap trail-map
+   path motif used elsewhere in the app
+════════════════════════════════════════════ */
+.trail {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2.75rem;
+  padding: 0 .5rem;
+}
+.trail-stop { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+.trail-marker {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: .78rem; font-weight: 700;
+  border: 2px solid var(--border2);
+  background: var(--surface);
+  color: var(--text3);
+  transition: all .3s;
+  position: relative;
+  z-index: 1;
+}
+.trail-stop.done .trail-marker { border-color: var(--accent); background: var(--accent); color: #000; }
+.trail-stop.active .trail-marker { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); box-shadow: 0 0 0 4px rgba(245,158,11,.12); }
+.trail-label { font-size: .74rem; color: var(--text3); white-space: nowrap; }
+.trail-stop.active .trail-label { color: var(--text); font-weight: 600; }
+.trail-stop.done .trail-label { color: var(--text2); }
+.trail-line {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  margin: 0 -1px;
+  position: relative;
+  top: -12px;
+}
+.trail-line.filled { background: var(--accent); }
+
+/* ══════════════════════════════════════════════
+   STEP PANELS
+════════════════════════════════════════════ */
+.ob-step { display: none; }
+.ob-step.active { display: block; animation: stepIn .25s ease; }
+@keyframes stepIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.ob-head { margin-bottom: 1.75rem; }
+.ob-head h1 { font-size: 1.55rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: .4rem; }
+.ob-head p { color: var(--text3); font-size: .88rem; line-height: 1.55; }
+
+/* ── Upload box ── */
+.upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--surface);
+  box-sizing: border-box;
+}
+.upload-box:hover, .upload-box.drag { border-color: var(--accent); background: var(--accent-dim); }
+.upload-box input { display: none; }
+.upload-icon { font-size: 1.9rem; margin-bottom: .85rem; }
+.upload-label { font-size: .92rem; font-weight: 600; color: var(--text); }
+.upload-sub { font-size: .78rem; color: var(--text3); margin-top: .4rem; }
+
+/* ── Skill chips ── */
+.chip-group { margin-bottom: 1.6rem; }
+.chip-group-head { display: flex; align-items: center; gap: 8px; margin-bottom: .7rem; }
+.chip-group-head .ic { font-size: .9rem; }
+.chip-group-head h4 {
+  font-size: .74rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text3); font-family: var(--mono);
+}
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; min-height: 2.2rem; }
+.chip {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 20px; padding: .38rem .5rem .38rem .9rem;
+  font-size: .82rem; display: flex; align-items: center; gap: 8px;
+  transition: border-color .15s;
+}
+.chip:hover { border-color: var(--border2); }
+.chip button {
+  background: var(--surface2); border: none; color: var(--text3);
+  cursor: pointer; font-size: .68rem; line-height: 1; padding: 4px;
+  border-radius: 50%; width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.chip button:hover { color: #ef4444; background: rgba(239,68,68,.12); }
+.chip-empty { font-size: .8rem; color: var(--text3); font-style: italic; padding: .3rem 0; }
+
+.chip-add { display: flex; gap: .5rem; margin-top: .75rem; }
+.chip-add input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 7px; padding: .55rem .8rem; color: var(--text);
+  font-size: .84rem; outline: none; transition: border-color .15s;
+}
+.chip-add input:focus { border-color: var(--accent); }
+
+/* ══════════════════════════════════════════════
+   RANKED ROLE RECOMMENDATIONS — new
+════════════════════════════════════════════ */
+.rec-section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: .3rem; }
+.rec-section-head h3 { font-size: .95rem; font-weight: 700; }
+.rec-section-sub { font-size: .78rem; color: var(--text3); margin-bottom: 1.1rem; line-height: 1.5; }
+
+.rec-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 2rem; }
+
+.rec-row {
+  display: flex; align-items: center; gap: .9rem;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: .85rem 1.1rem;
+  cursor: pointer; transition: all .18s; position: relative;
+}
+.rec-row:hover { border-color: var(--border2); transform: translateY(-1px); }
+.rec-row.selected { border-color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 0 3px rgba(245,158,11,.1); }
+
+.rec-rank {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-weight: 800; font-size: .82rem;
+  background: var(--bg3); border: 1.5px solid var(--border2); color: var(--text2);
+}
+.rec-row[data-rank="1"] .rec-rank { background: var(--accent); border-color: var(--accent); color: #000; }
+.rec-row[data-rank="2"] .rec-rank { background: rgba(192,192,192,.18); border-color: #b8b8c0; color: #d8d8de; }
+.rec-row[data-rank="3"] .rec-rank { background: rgba(180,120,60,.18); border-color: #b47a3c; color: #e0a870; }
+
+.rec-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+.rec-info { flex: 1; min-width: 0; }
+.rec-title { font-size: .92rem; font-weight: 700; margin-bottom: .35rem; }
+.rec-bar-track { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.rec-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width .5s ease;
+}
+.rec-row[data-tier="possible"] .rec-bar-fill { background: linear-gradient(90deg, var(--blue), #60a5fa); }
+.rec-row[data-tier="low"] .rec-bar-fill { background: var(--border2); }
+
+.rec-pct-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; flex-shrink: 0; min-width: 64px; }
+.rec-pct { font-family: var(--mono); font-weight: 800; font-size: 1rem; color: var(--accent2); }
+.rec-row[data-tier="possible"] .rec-pct { color: var(--blue); }
+.rec-row[data-tier="low"] .rec-pct { color: var(--text3); }
+.rec-tier-badge {
+  font-size: .62rem; font-family: var(--mono); font-weight: 700;
+  padding: .12rem .45rem; border-radius: 20px; letter-spacing: .03em;
+  background: var(--accent-dim); color: var(--accent);
+}
+.rec-row[data-tier="possible"] .rec-tier-badge { background: var(--blue-dim); color: var(--blue); }
+.rec-row[data-tier="low"] .rec-tier-badge { background: var(--surface2); color: var(--text3); }
+
+.rec-check {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  border: 1.5px solid var(--border2); background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+}
+.rec-row.selected .rec-check { background: var(--accent); border-color: var(--accent); }
+.rec-check svg { width: 10px; height: 10px; opacity: 0; }
+.rec-row.selected .rec-check svg { opacity: 1; }
+
+.rec-fallback-note {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--blue-dim); border: 1px solid rgba(59,130,246,.25);
+  border-radius: 8px; padding: .6rem .9rem; font-size: .78rem; color: var(--blue);
+  margin-bottom: 1.5rem; line-height: 1.5;
+}
+
+/* ── Browse-all divider + grid (existing roles, now secondary) ── */
+.browse-divider {
+  display: flex; align-items: center; gap: 1rem; margin: 1.75rem 0 1.1rem;
+}
+.browse-divider span {
+  font-size: .74rem; font-family: var(--mono); color: var(--text3);
+  text-transform: uppercase; letter-spacing: .08em; white-space: nowrap;
+}
+.browse-divider .line { flex: 1; height: 1px; background: var(--border); }
+.browse-toggle {
+  background: none; border: 1px solid var(--border2); color: var(--text2);
+  font-size: .76rem; font-weight: 600; padding: .3rem .8rem; border-radius: 20px;
+  cursor: pointer; font-family: var(--font); transition: all .15s;
+}
+.browse-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+.role-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: .75rem; margin-top: 1.1rem; }
+.role-grid.expanded { display: grid; }
+.role-pick {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 1.1rem 1rem; text-align: center;
+  cursor: pointer; transition: all .18s; position: relative;
+}
+.role-pick:hover { border-color: var(--border2); transform: translateY(-2px); }
+.role-pick.selected { border-color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 0 3px rgba(245,158,11,.1); }
+.role-icon { font-size: 1.6rem; margin-bottom: .5rem; }
+.role-name { font-size: .84rem; font-weight: 600; }
+.role-match-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: .64rem; color: var(--accent); font-family: var(--mono);
+  margin-top: .45rem; letter-spacing: .02em;
+}
+
+/* ── Nav actions ── */
+.ob-actions { display: flex; justify-content: space-between; margin-top: 2.25rem; align-items: center; }
+.spin-inline {
+  width: 15px; height: 15px; border: 2px solid var(--border2);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite; display: inline-block;
+  vertical-align: middle; margin-right: 7px;
+}
+{% endblock %}
+{% block content %}
+<div class="ob-wrap">
+
+  <!-- WAYPOINT TRAIL -->
+  <div class="trail" id="trail">
+    <div class="trail-stop active" data-step="1">
+      <div class="trail-marker">01</div>
+      <div class="trail-label">Upload</div>
+    </div>
+    <div class="trail-line" data-line="1"></div>
+    <div class="trail-stop" data-step="2">
+      <div class="trail-marker">02</div>
+      <div class="trail-label">Review</div>
+    </div>
+    <div class="trail-line" data-line="2"></div>
+    <div class="trail-stop" data-step="3">
+      <div class="trail-marker">03</div>
+      <div class="trail-label">Choose path</div>
+    </div>
+  </div>
+
+  <!-- STEP 1: Upload resume -->
+  <div class="ob-step active" id="step1">
+    <div class="ob-head">
+      <h1>Let's find your starting point</h1>
+      <p>Upload your resume so we can suggest roadmaps that match what you already know.</p>
+    </div>
+    <label class="upload-box" for="resumeInput" id="uploadBox">
+      <div class="upload-icon">📄</div>
+      <div class="upload-label" id="uploadLabel">Click to upload your resume</div>
+      <div class="upload-sub">PDF, JPG, or PNG — DOCX not yet supported</div>
+      <input type="file" id="resumeInput" accept=".pdf,.jpg,.jpeg,.png">
+    </label>
+    <div class="ob-actions">
+      <span></span>
+      <button class="btn btn-outline" onclick="skipToRoles()">Skip — I'll pick manually</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Review extracted skills -->
+  <div class="ob-step" id="step2">
+    <div class="ob-head">
+      <h1>Review your skills</h1>
+      <p>We extracted these from your resume — remove anything wrong, add anything missing.</p>
+    </div>
+    <div class="chip-group">
+      <div class="chip-group-head"><span class="ic">🛠️</span><h4>Technical Skills</h4></div>
+      <div class="chips" id="techChips"></div>
+    </div>
+    <div class="chip-group">
+      <div class="chip-group-head"><span class="ic">🧭</span><h4>Domain Knowledge</h4></div>
+      <div class="chips" id="domainChips"></div>
+    </div>
+    <div class="chip-add">
+      <input type="text" id="newSkillInput" placeholder="Add a skill and press Enter">
+    </div>
+    <div class="ob-actions">
+      <button class="btn btn-outline" onclick="goToStep(1)">Back</button>
+      <button class="btn btn-primary" onclick="confirmSkills()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Pick primary role roadmap — now a ranked, percentage-matched list -->
+  <div class="ob-step" id="step3">
+    <div class="ob-head">
+      <h1>Choose your role</h1>
+      <p>This becomes your primary roadmap. You can add more later from your dashboard.</p>
+    </div>
+
+    <div id="recSection" style="display:none">
+      <div class="rec-section-head">
+        <h3>🎯 Recommended For You</h3>
+      </div>
+      <p class="rec-section-sub" id="recSectionSub">Ranked against your resume — higher match means your current skills line up more closely with what this role typically needs.</p>
+      <div class="rec-list" id="recList"></div>
+    </div>
+
+    <div id="fallbackNote" class="rec-fallback-note" style="display:none">
+      ℹ️ We couldn't confidently score roles against your resume yet — browse all roles below and pick manually.
+    </div>
+
+    <div class="browse-divider">
+      <span id="browseLabel">All Roles</span>
+      <div class="line"></div>
+      <button class="browse-toggle" id="browseToggleBtn" onclick="toggleBrowseAll()">Show all →</button>
+    </div>
+    <div class="role-grid" id="roleGrid"></div>
+
+    <div class="ob-actions">
+      <button class="btn btn-outline" onclick="goToStep(2)">Back</button>
+      <button class="btn btn-primary" id="finishBtn" disabled onclick="finishOnboarding()">Get Started →</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let currentSkills = { skills: { technical: {}, domain_knowledge: {} }, all_skills_flat: [] };
+let selectedRoleId = null;
+
+function goToStep(n) {
+  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  updateTrail(n);
+}
+
+function updateTrail(n) {
+  document.querySelectorAll('.trail-stop').forEach(el => {
+    const step = parseInt(el.dataset.step, 10);
+    el.classList.remove('active', 'done');
+    if (step < n) el.classList.add('done');
+    else if (step === n) el.classList.add('active');
+  });
+  document.querySelectorAll('.trail-line').forEach(el => {
+    const line = parseInt(el.dataset.line, 10);
+    el.classList.toggle('filled', line < n);
+  });
+}
+
+function skipToRoles() {
+  goToStep(3);
+  loadRoles();
+}
+
+const uploadBox = document.getElementById('uploadBox');
+['dragover', 'dragenter'].forEach(evt =>
+  uploadBox.addEventListener(evt, e => { e.preventDefault(); uploadBox.classList.add('drag'); })
+);
+['dragleave', 'drop'].forEach(evt =>
+  uploadBox.addEventListener(evt, e => { e.preventDefault(); uploadBox.classList.remove('drag'); })
+);
+uploadBox.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    document.getElementById('resumeInput').files = e.dataTransfer.files;
+    handleResumeFile(file);
+  }
+});
+
+document.getElementById('resumeInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) handleResumeFile(file);
+});
+
+async function handleResumeFile(file) {
+  document.getElementById('uploadLabel').innerHTML = `<span class="spin-inline"></span> Parsing ${esc(file.name)}…`;
+
+  const fd = new FormData();
+  fd.append('resume', file);
+
+  try {
+    const r = await fetch('/onboarding/parse-resume', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Parsing failed');
+    currentSkills = d.skills;
+    renderChips();
+    goToStep(2);
+  } catch (err) {
+    showToast('⚠️ ' + err.message);
+    document.getElementById('uploadLabel').textContent = 'Click to upload your resume';
+  }
+}
+
+function renderChips() {
+  const tech = currentSkills.skills?.technical || {};
+  const domain = currentSkills.skills?.domain_knowledge || {};
+
+  const techBox = document.getElementById('techChips');
+  const domainBox = document.getElementById('domainChips');
+  techBox.innerHTML = '';
+  domainBox.innerHTML = '';
+
+  const flatTech = [];
+  Object.entries(tech).forEach(([k, subs]) => {
+    flatTech.push(k);
+    (subs || []).forEach(s => flatTech.push(s));
+  });
+
+  if (flatTech.length) flatTech.forEach(s => techBox.appendChild(makeChip(s)));
+  else techBox.innerHTML = '<div class="chip-empty">None detected — add some below</div>';
+
+  const domainKeys = Object.keys(domain);
+  if (domainKeys.length) domainKeys.forEach(s => domainBox.appendChild(makeChip(s)));
+  else domainBox.innerHTML = '<div class="chip-empty">None detected</div>';
+}
+
+function makeChip(label) {
+  const el = document.createElement('div');
+  el.className = 'chip';
+  el.innerHTML = `<span>${esc(label)}</span><button onclick="removeSkill(this, '${esc(label)}')">✕</button>`;
+  return el;
+}
+
+function removeSkill(btn, label) {
+  btn.closest('.chip').remove();
+  const tech = currentSkills.skills.technical;
+  delete tech[label];
+  Object.keys(tech).forEach(k => {
+    if (tech[k]) tech[k] = tech[k].filter(s => s !== label);
+  });
+  delete currentSkills.skills.domain_knowledge[label];
+  currentSkills.all_skills_flat = (currentSkills.all_skills_flat || []).filter(s => s !== label);
+}
+
+document.getElementById('newSkillInput').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || !e.target.value.trim()) return;
+  const val = e.target.value.trim();
+  const empty = document.querySelector('#techChips .chip-empty');
+  if (empty) empty.remove();
+  currentSkills.skills.technical[val] = null;
+  currentSkills.all_skills_flat = currentSkills.all_skills_flat || [];
+  currentSkills.all_skills_flat.push(val);
+  document.getElementById('techChips').appendChild(makeChip(val));
+  e.target.value = '';
+});
+
+async function confirmSkills() {
+  await fetch('/onboarding/confirm-skills', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ skills: currentSkills })
+  });
+  goToStep(3);
+  loadRoles();
+}
+
+/* ══════════════════════════════════════════════
+   STEP 3 — ranked recommendations + browse-all grid
+════════════════════════════════════════════ */
+async function loadRoles() {
+  const r = await fetch('/onboarding/suggested-roles');
+  const d = await r.json();
+
+  const ranked = (d.roles || []).filter(role => role.match_score !== null)
+                                 .sort((a, b) => a.match_rank - b.match_rank);
+
+  renderRecommendations(ranked, d.ranking_available);
+  renderRoleGrid(d.roles || []);
+
+  // If nothing could be ranked at all, open the browse-all grid by default
+  // so the user isn't staring at an empty recommendations section.
+  if (!ranked.length) {
+    document.getElementById('fallbackNote').style.display = 'flex';
+    toggleBrowseAll(true);
+  }
+}
+
+function renderRecommendations(ranked, rankingAvailable) {
+  const section = document.getElementById('recSection');
+  const list = document.getElementById('recList');
+  if (!rankingAvailable || !ranked.length) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+
+  // Show top 5 prominently — a full 22-row ranked list with mostly
+  // near-zero percentages is noise, not a recommendation.
+  const top = ranked.slice(0, 5);
+  list.innerHTML = '';
+  top.forEach(role => {
+    const row = document.createElement('div');
+    row.className = 'rec-row';
+    row.dataset.rank = role.match_rank;
+    row.dataset.tier = role.match_tier;
+    row.dataset.roleId = role.id;
+    row.innerHTML = `
+      <div class="rec-rank">${role.match_rank}</div>
+      <div class="rec-icon">${role.icon}</div>
+      <div class="rec-info">
+        <div class="rec-title">${esc(role.title)}</div>
+        <div class="rec-bar-track"><div class="rec-bar-fill" style="width:${role.match_percent}%"></div></div>
+      </div>
+      <div class="rec-pct-wrap">
+        <span class="rec-pct">${role.match_percent}%</span>
+        <span class="rec-tier-badge">${tierLabel(role.match_tier)}</span>
+      </div>
+      <div class="rec-check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="#08130c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    `;
+    row.addEventListener('click', () => selectRole(role.id, row, null));
+    list.appendChild(row);
+  });
+}
+
+function tierLabel(tier) {
+  return { best: 'BEST MATCH', strong: 'STRONG MATCH', possible: 'POSSIBLE MATCH', low: 'LOW MATCH' }[tier] || '';
+}
+
+function renderRoleGrid(roles) {
+  const grid = document.getElementById('roleGrid');
+  grid.innerHTML = '';
+  roles.forEach(role => {
+    const el = document.createElement('div');
+    el.className = 'role-pick';
+    el.dataset.roleId = role.id;
+    el.innerHTML = `
+      <div class="role-icon">${role.icon}</div>
+      <div class="role-name">${esc(role.title)}</div>
+      ${role.match_percent !== null ? `<div class="role-match-badge">${role.match_percent}% match</div>`
+        : (role.match_hint ? '<div class="role-match-badge">✓ MATCHES YOUR SKILLS</div>' : '')}
+    `;
+    el.addEventListener('click', () => selectRole(role.id, null, el));
+    grid.appendChild(el);
+  });
+}
+
+function selectRole(roleId, recRowEl, gridEl) {
+  // Clear selection state across BOTH the ranked list and the grid — a
+  // role picked from one should visually deselect any stale pick in the
+  // other, since they represent the same underlying choice.
+  document.querySelectorAll('.rec-row.selected').forEach(x => x.classList.remove('selected'));
+  document.querySelectorAll('.role-pick.selected').forEach(x => x.classList.remove('selected'));
+
+  if (recRowEl) recRowEl.classList.add('selected');
+  const gridMatch = document.querySelector(`.role-pick[data-role-id="${roleId}"]`);
+  if (gridMatch) gridMatch.classList.add('selected');
+  const recMatch = document.querySelector(`.rec-row[data-role-id="${roleId}"]`);
+  if (recMatch) recMatch.classList.add('selected');
+
+  selectedRoleId = roleId;
+  document.getElementById('finishBtn').disabled = false;
+}
+
+function toggleBrowseAll(forceOpen) {
+  const grid = document.getElementById('roleGrid');
+  const btn = document.getElementById('browseToggleBtn');
+  const open = forceOpen === true || !grid.classList.contains('expanded');
+  grid.classList.toggle('expanded', open);
+  btn.textContent = open ? 'Hide ←' : 'Show all →';
+}
+
+async function finishOnboarding() {
+  if (!selectedRoleId) return;
+  await fetch('/onboarding/select-role', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ roadmap_id: selectedRoleId })
+  });
+  window.location.href = '/dashboard';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{#
+  templates/partials/matched_opportunities.html
+
+  Drop-in widget for the dashboard (index.html, per app.py's /dashboard
+  route). Add exactly one line wherever it should appear in that
+  template's content block:
+
+      {% include "partials/matched_opportunities.html" %}
+
+  Deliberately built using ONLY classes already defined globally in
+  base.html (.section-header, .card, .badge-*, .grid-3, .btn, .spinner) —
+  no new CSS needed, so this is safe to include without knowing the
+  surrounding template's layout.
+
+  Requires the including page to already have a logged-in user (true for
+  /dashboard — app.py redirects to /login otherwise). Pulls from
+  GET /api/v2/opportunities/match/me, which reads the current session's
+  user_id server-side; no user data needs to be passed into this include.
+#}
+<div class="section-header" id="matchedOppsHeader">
+  <div class="eyebrow">🎯 For You</div>
+  <h2>Matched Opportunities</h2>
+  <p>Hackathons, internships &amp; jobs matched to your resume skills</p>
+</div>
+
+<div id="matchedOppsLoading" style="display:flex;align-items:center;gap:10px;color:var(--text3);font-size:.85rem;padding:1rem 0">
+  <div class="spinner" style="width:20px;height:20px;border-width:2px"></div>
+  Finding matches for you…
+</div>
+
+<div id="matchedOppsEmpty" style="display:none;background:var(--surface);border:1px dashed var(--border2);border-radius:var(--radius-lg);padding:1.75rem;text-align:center;margin-bottom:1rem">
+  <div style="font-size:1.6rem;margin-bottom:.6rem" id="matchedOppsEmptyIcon">📄</div>
+  <p style="color:var(--text2);font-size:.88rem;margin-bottom:.3rem" id="matchedOppsEmptyTitle"></p>
+  <p style="color:var(--text3);font-size:.8rem" id="matchedOppsEmptySub"></p>
+  <a href="/profile" class="btn btn-outline" style="margin-top:1rem;display:inline-flex" id="matchedOppsEmptyAction">Update Skills</a>
+</div>
+
+<div id="matchedOppsError" style="display:none;background:var(--surface);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;color:#fca5a5;font-size:.85rem;margin-bottom:1rem">
+  ⚠️ Couldn't load matched opportunities right now.
+</div>
+
+<div class="grid-3" id="matchedOppsGrid" style="margin-bottom:1rem"></div>
+
+<div id="matchedOppsFooter" style="display:none;text-align:center;margin-bottom:2rem">
+  <a href="/opportunities" class="btn btn-outline">View All Opportunities →</a>
+</div>
+
+<script>
+(function () {
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                          .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  const TYPE_BADGE = {
+    hackathon: 'badge-amber', internship: 'badge-blue', job: 'badge-green',
+    techfest: 'badge-purple', workshop: 'badge-amber',
+  };
+
+  function card(o) {
+    const badgeCls = TYPE_BADGE[o.opp_type] || 'badge-amber';
+    const skillBadges = (o.skills || []).slice(0, 3)
+      .map(s => `<span class="badge ${badgeCls}" style="margin-right:4px">${esc(s)}</span>`).join('');
+    const meta = [o.org, o.location].filter(Boolean).join(' · ');
+    return `
+      <a href="${o.url}" target="_blank" rel="noopener" class="card" style="text-decoration:none;display:flex;flex-direction:column;gap:.5rem">
+        <span class="badge ${badgeCls}" style="align-self:flex-start;text-transform:uppercase;font-size:.65rem">${esc(o.opp_type)}</span>
+        <div style="font-weight:700;font-size:.95rem;color:var(--text);line-height:1.35">${esc(o.title)}</div>
+        ${meta ? `<div style="font-size:.8rem;color:var(--text3)">${esc(meta)}</div>` : ''}
+        <div style="margin-top:auto;padding-top:.5rem">${skillBadges}</div>
+      </a>`;
+  }
+
+  function show(id) {
+    ['matchedOppsLoading', 'matchedOppsEmpty', 'matchedOppsError', 'matchedOppsGrid', 'matchedOppsFooter']
+      .forEach(x => document.getElementById(x).style.display = 'none');
+    if (id) document.getElementById(id).style.display = (id === 'matchedOppsGrid') ? 'grid' : (id === 'matchedOppsFooter' ? 'block' : 'flex');
+  }
+
+  function showEmpty(reason) {
+    const icon  = document.getElementById('matchedOppsEmptyIcon');
+    const title = document.getElementById('matchedOppsEmptyTitle');
+    const sub   = document.getElementById('matchedOppsEmptySub');
+    const action = document.getElementById('matchedOppsEmptyAction');
+
+    if (reason === 'no_resume_skills') {
+      icon.textContent = '📄';
+      title.textContent = "We don't have any skills on file for you yet.";
+      sub.textContent = 'Upload your resume or add skills manually to see matched opportunities.';
+      action.textContent = 'Add Your Skills';
+    } else {
+      icon.textContent = '🔍';
+      title.textContent = "None of your listed skills matched our opportunity categories yet.";
+      sub.textContent = 'Try adding more common technical skills (languages, frameworks, tools).';
+      action.textContent = 'Update Skills';
+    }
+    show('matchedOppsEmpty');
+  }
+
+  async function loadMatchedOpportunities() {
+    show('matchedOppsLoading');
+    try {
+      const res = await fetch('/api/v2/opportunities/match/me?limit=6');
+      if (res.status === 401) {
+        // Not logged in — widget was included somewhere it shouldn't have
+        // been, or the session expired mid-page. Fail quietly rather than
+        // showing a scary error on what should be an authenticated page.
+        document.getElementById('matchedOppsHeader').style.display = 'none';
+        show(null);
+        return;
+      }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const d = await res.json();
+
+      if (d.reason) { showEmpty(d.reason); return; }
+      if (!d.opportunities || !d.opportunities.length) { showEmpty('no_taxonomy_matches'); return; }
+
+      document.getElementById('matchedOppsGrid').innerHTML = d.opportunities.map(card).join('');
+      show('matchedOppsGrid');
+      document.getElementById('matchedOppsFooter').style.display = 'block';
+    } catch (e) {
+      show('matchedOppsError');
+    }
+  }
+
+  loadMatchedOpportunities();
+})();
+</script>

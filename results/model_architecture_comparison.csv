@@ -1,0 +1,6 @@
+model,macro_f1_mean,macro_f1_std
+linear_svm,0.905,0.012
+logistic_regression,0.885,0.013
+random_forest,0.838,0.015
+xgboost,0.834,0.012
+catboost,0.745,0.025

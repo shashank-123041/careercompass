@@ -1,0 +1,32 @@
+# secrets
+.env
+secrets/
+*.pem
+
+# python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# external clone and local data
+developer-roadmap/
+data/raw/
+data/interim/
+data/generated/
+data/cache/
+data/*.db
+data/*.db-*
+cache/
+_review_before_delete/
+
+# model artifacts not served
+models/*.cbm
+scripts/legacy_catboost/*.cbm
+
+# editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
