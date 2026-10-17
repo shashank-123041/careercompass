@@ -7,11 +7,12 @@ Google directly — it only verifies the ID token Firebase already vetted,
 then starts a normal Flask cookie session keyed to our own users table.
 """
 from functools import wraps
+
 from flask import Blueprint, request, jsonify, session
 from firebase_admin import auth as fb_auth
-from careercompass.db import operations as ops
-from careercompass.config import Config
 
+from careercompass.config import Config
+from careercompass.db import operations as ops
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -69,20 +70,25 @@ def login_required(fn):
     return wrapper
 
 
+def is_admin_user(user) -> bool:
+    """Admin = email listed in ADMIN_EMAILS. With no list configured, any
+    signed-in user counts as admin in development only (never in production).
+    Used both by admin_required below and by the `is_admin` template flag
+    injected in app.py, so the UI and the server always agree."""
+    if not user:
+        return False
+    if Config.ADMIN_EMAILS:
+        return (user.email or "").lower() in Config.ADMIN_EMAILS
+    return not Config.IS_PRODUCTION
+
+
 def admin_required(fn):
-    """Only emails listed in ADMIN_EMAILS may pass. In local development
-    (not production) with no ADMIN_EMAILS set, any signed-in user may pass."""
+    """Decorator for admin-only pages/endpoints (sync triggers, dashboards)."""
     @wraps(fn)
     def wrapper(*args, **kwargs):
         if "user_id" not in session:
             return jsonify({"error": "not authenticated"}), 401
-        user = ops.get_user_by_id(session["user_id"])
-        email = (user.email if user else "").lower()
-        if Config.ADMIN_EMAILS:
-            allowed = email in Config.ADMIN_EMAILS
-        else:
-            allowed = not Config.IS_PRODUCTION
-        if not user or not allowed:
+        if not is_admin_user(ops.get_user_by_id(session["user_id"])):
             return jsonify({"error": "forbidden"}), 403
         return fn(*args, **kwargs)
     return wrapper

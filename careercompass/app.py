@@ -50,7 +50,7 @@ def create_app() -> Flask:
     from careercompass.api.routes import api
     from careercompass.api.opportunity_routes import opportunities_api
     import careercompass.auth  # noqa: F401  (side-effect import: boots Firebase Admin SDK)
-    from careercompass.auth.routes import auth_bp, admin_required
+    from careercompass.auth.routes import auth_bp, admin_required, is_admin_user
     from careercompass.onboarding.routes import onboarding_bp
     from careercompass.user_profile.routes import profile_bp
 
@@ -78,13 +78,14 @@ def create_app() -> Flask:
 
     @app.context_processor
     def inject_current_user():
-        """Makes `current_user` available in every template so base.html's nav
-        can show the profile menu on every page a logged-in visitor sees."""
+        """Makes `current_user` and `is_admin` available in every template, so
+        base.html's nav can show the profile menu (and the admin link) on every
+        page a logged-in visitor sees."""
         if "user_id" in session:
             u = ops.get_user_by_id(session["user_id"])
             if u:
-                return {"current_user": u.to_dict()}
-        return {"current_user": None}
+                return {"current_user": u.to_dict(), "is_admin": is_admin_user(u)}
+        return {"current_user": None, "is_admin": False}
 
     # ── Health check (hosting platforms poll this) ─────────────────────────────
 
