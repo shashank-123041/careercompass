@@ -371,7 +371,7 @@
   <div id="mainCol">
     <div class="sync-note" id="syncNote">
       <i class='bx bx-sync'></i> Sync running — <strong id="syncNoteSlug">roadmaps</strong> being processed…
-      <a href="/admin">Watch →</a>
+      {% if is_admin %}<a href="/admin">Watch →</a>{% endif %}
     </div>
 
     <div class="state" id="stLoading">
@@ -381,12 +381,12 @@
     <div class="state err" id="stError" style="display:none">
       <i class='bx bxs-error-circle state-icon'></i>
       <p><span id="stErrMsg">Could not load roadmap</span></p>
-      <p class="sub">Check <a href="/admin" style="color:var(--accent2)">sync dashboard</a> and trigger a sync first.</p>
+      <p class="sub">{% if is_admin %}Check the <a href="/admin" style="color:var(--accent2)">sync dashboard</a> and trigger a sync first.{% else %}Try again in a moment.{% endif %}</p>
     </div>
     <div class="state" id="stEmpty" style="display:none;border-style:dashed">
       <i class='bx bx-time state-icon'></i>
       <p>Topics not yet extracted for <strong>{{ roadmap.slug }}</strong>.</p>
-      <p class="sub">Go to <a href="/admin" style="color:var(--accent2)">sync dashboard</a> → Trigger Sync → come back.</p>
+      <p class="sub">{% if is_admin %}Go to <a href="/admin" style="color:var(--accent2)">sync dashboard</a> → Trigger Sync → come back.{% else %}This roadmap is still being prepared. Check back soon.{% endif %}</p>
     </div>
 
     <div class="rm-desc" id="rmDesc"></div>

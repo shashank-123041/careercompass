@@ -315,7 +315,7 @@
     <div class="sync-strip">
       <i class='bx bx-sync'></i>
       <span id="syncLabel">Checking sync status…</span>
-      <button class="refresh-link" id="refreshBtn"><i class='bx bx-refresh'></i> Refresh now</button>
+      {% if is_admin %}<button class="refresh-link" id="refreshBtn"><i class='bx bx-refresh'></i> Refresh now</button>{% endif %}
     </div>
 
     <div class="fallback-note" id="fallbackNote">
@@ -331,7 +331,7 @@
     <div class="state err" id="stError" style="display:none">
       <i class='bx bxs-error-circle state-icon'></i>
       <p>Could not load opportunities.</p>
-      <p class="sub">Try refreshing, or check the <a href="/admin" style="color:var(--accent2)">sync dashboard</a>.</p>
+      <p class="sub">Try refreshing the page{% if is_admin %}, or check the <a href="/admin" style="color:var(--accent2)">sync dashboard</a>{% endif %}.</p>
     </div>
     <div class="state" id="stNotLoggedIn" style="display:none;border-style:dashed">
       <i class='bx bx-lock-alt state-icon'></i>
@@ -686,12 +686,12 @@ async function pollSyncStatus() {
     const btn = document.getElementById('refreshBtn');
     if (live.running) {
       label.textContent = `Syncing ${live.current_source || '…'} (${live.sources_done}/${live.sources_total})`;
-      btn.disabled = true;
+      if (btn) btn.disabled = true;
     } else {
       const status = live.last_status || 'never synced';
       const when = live.last_completed ? live.last_completed.slice(0, 16) : '';
       label.textContent = `Last sync: ${status}${when ? ' · ' + when : ''}`;
-      btn.disabled = false;
+      if (btn) btn.disabled = false;
       if (live.last_fallback_sources && live.last_fallback_sources.length) {
         label.textContent += ` · fallback used for: ${live.last_fallback_sources.join(', ')}`;
       }
@@ -701,7 +701,7 @@ async function pollSyncStatus() {
   }
 }
 
-document.getElementById('refreshBtn').addEventListener('click', async () => {
+document.getElementById('refreshBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true; btn.innerHTML = '<i class="bx bx-loader-alt spin"></i> Starting…';
   try {

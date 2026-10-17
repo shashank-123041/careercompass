@@ -235,11 +235,11 @@ main { max-width: none !important; padding: 0 !important; margin: 0 !important; 
               <span class="field-label">Password</span>
               <span class="field-control"><i class='bx bx-lock-alt'></i><input type="password" id="loginPassword" placeholder="Your password" autocomplete="current-password" required minlength="6"><button type="button" class="pw-toggle" aria-label="Show password"><i class='bx bx-show'></i></button></span>
             </label>
-            <div class="forgot-row"><a id="forgotPasswordLink">Forgot password?</a></div>
+            <div class="forgot-row"><a id="forgotPasswordLink" href="#">Forgot password?</a></div>
             <button type="submit" class="btn-auth" id="loginSubmitBtn"><span>Sign In</span><i class='bx bx-right-arrow-alt'></i></button>
           </form>
           <div class="auth-err" id="loginErr"><i class='bx bxs-error-circle'></i><span id="loginErrText"></span></div>
-          <p class="switch-line">New to CareerCompass? <a data-switch="register">Create an account</a></p>
+          <p class="switch-line">New to CareerCompass? <a data-switch="register" href="#">Create an account</a></p>
         </div>
 
         <!-- Create account -->
@@ -270,7 +270,7 @@ main { max-width: none !important; padding: 0 !important; margin: 0 !important; 
             <button type="submit" class="btn-auth" id="registerSubmitBtn"><span>Create Account</span><i class='bx bx-right-arrow-alt'></i></button>
           </form>
           <div class="auth-err" id="registerErr"><i class='bx bxs-error-circle'></i><span id="registerErrText"></span></div>
-          <p class="switch-line">Already have an account? <a data-switch="login">Sign in</a></p>
+          <p class="switch-line">Already have an account? <a data-switch="login" href="#">Sign in</a></p>
         </div>
 
       </div>
@@ -701,7 +701,7 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     const name = document.getElementById("registerName").value.trim();
     const cred = await createUserWithEmailAndPassword(auth, document.getElementById("registerEmail").value.trim(), document.getElementById("registerPassword").value);
     if (name) await updateProfile(cred.user, { displayName: name });
-    await completeLogin(await cred.user.getIdToken());
+    await completeLogin(await cred.user.getIdToken(true));   // true = refresh, so the token carries the new name
   } catch (err) {
     showErr("registerErr", "registerErrText", friendlyError(err));
     btn.disabled = false; label.textContent = "Create Account";

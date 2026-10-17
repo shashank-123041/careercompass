@@ -347,6 +347,7 @@
           </div>
           <a href="/profile/"><i class='bx bx-user-circle'></i> Profile &amp; Settings</a>
           <a href="/dashboard"><i class='bx bx-compass'></i> Dashboard</a>
+          {% if is_admin %}<a href="/admin"><i class='bx bx-cog'></i> Sync Dashboard</a>{% endif %}
           <button class="nm-signout" id="navSignOutBtn"><i class='bx bx-log-out'></i> Sign out</button>
         </div>
       </div>
@@ -374,12 +375,17 @@
     const navProfileBtn = document.getElementById('navProfileBtn');
     const navProfileMenu = document.getElementById('navProfileMenu');
     if (navProfileBtn && navProfileMenu) {
-      navProfileBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        navProfileMenu.classList.toggle('open');
+      navProfileBtn.addEventListener('click', () => navProfileMenu.classList.toggle('open'));
+      // Close on any click outside the menu. No stopPropagation here, so links
+      // inside the menu still get the page transition below.
+      document.addEventListener('click', (e) => {
+        if (!navProfileMenu.contains(e.target) && !navProfileBtn.contains(e.target)) {
+          navProfileMenu.classList.remove('open');
+        }
       });
-      document.addEventListener('click', () => navProfileMenu.classList.remove('open'));
-      navProfileMenu.addEventListener('click', (e) => e.stopPropagation());
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') navProfileMenu.classList.remove('open');
+      });
     }
 
     const navSignOutBtn = document.getElementById('navSignOutBtn');
@@ -390,14 +396,25 @@
       });
     }
 
-    // ── Page-exit transition: fades the page out before navigating away on
-    // any plain same-origin link click, so page-to-page movement feels like
-    // one continuous motion rather than an abrupt reload. Entrance animation
-    // is pure CSS (see body{animation:pageEnter...} above) so it still runs
-    // even if this script fails to execute. Only intercepts plain <a> clicks
-    // — JS-driven redirects elsewhere in the app (e.g. after an async login)
-    // are unaffected by this and navigate instantly, same as before.
+    // ── Page transitions ─────────────────────────────────────────────────────
+    // Fades the page out before navigating away on a plain same-origin link
+    // click. The entrance animation is pure CSS (body{animation:pageEnter}) so
+    // it still runs even if this script fails. JS-driven redirects elsewhere
+    // can call navigateWithTransition(url) directly (login.html does).
+    const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function navigateWithTransition(href) {
+      if (prefersReducedMotion()) { window.location.href = href; return; }
+      document.body.classList.add('page-exit');
+      setTimeout(() => { window.location.href = href; }, 240);
+    }
+
+    // Back/forward can restore this page from the browser cache while it is
+    // still faded out; clear the class so it never reappears blank.
+    window.addEventListener('pageshow', () => document.body.classList.remove('page-exit'));
+
     document.addEventListener('click', (e) => {
+      if (e.defaultPrevented) return;
       const link = e.target.closest('a');
       if (!link) return;
       if (link.target === '_blank' || link.hasAttribute('download') || link.dataset.noTransition !== undefined) return;
@@ -409,11 +426,9 @@
       let url;
       try { url = new URL(href, window.location.href); } catch (err) { return; }
       if (url.origin !== window.location.origin) return;
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
       e.preventDefault();
-      document.body.classList.add('page-exit');
-      setTimeout(() => { window.location.href = url.href; }, 240);
+      navigateWithTransition(url.href);
     });
   </script>
   {% block extra_js %}{% endblock %}
