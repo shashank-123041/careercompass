@@ -1,83 +1,351 @@
 {% extends "base.html" %}
 {% block title %}Profile — CareerCompass{% endblock %}
 {% block extra_css %}
-.pf-wrap { max-width: 760px; margin: 0 auto; padding: 2rem 0 4rem; }
-.pf-head { margin-bottom: 2rem; }
-.pf-head h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: .3rem; }
-.pf-head p { color: var(--text3); font-size: .88rem; }
+.pf-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1.75rem; align-items: start; padding: 1.5rem 0 4rem; }
+@media (max-width: 960px) { .pf-layout { grid-template-columns: minmax(0, 1fr); } }
 
-.pf-section {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 1.5rem 1.75rem; margin-bottom: 1.25rem;
+/* ══════════════════════════════════════════════
+   LEFT — identity, profile strength, tab navigation
+════════════════════════════════════════════ */
+.pf-side {
+  position: sticky; top: 76px;
+  background: linear-gradient(165deg, rgba(23,27,41,.9), rgba(10,13,20,.85));
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  overflow: hidden; backdrop-filter: blur(10px);
 }
-.pf-section h2 {
-  font-size: .95rem; font-weight: 700; margin-bottom: 1.1rem;
-  display: flex; align-items: center; gap: 8px;
-}
-.pf-section h2 .ic { font-size: 1rem; }
+@media (max-width: 960px) { .pf-side { position: static; } }
 
-/* Account */
-.pf-account-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
-.pf-avatar { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border2); flex-shrink: 0; }
+.pf-identity { padding: 1.75rem 1.4rem 1.3rem; text-align: center; border-bottom: 1px solid var(--border); position: relative; }
+.pf-identity::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 90px;
+  background: linear-gradient(180deg, rgba(61,125,255,.14), transparent); pointer-events: none;
+}
+.pf-avatar {
+  position: relative; width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 1rem;
+  overflow: hidden; border: 2px solid rgba(61,125,255,.45);
+  box-shadow: 0 0 0 5px rgba(61,125,255,.1), 0 8px 24px rgba(0,0,0,.4);
+}
 .pf-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.pf-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--accent-dim); color: var(--accent); font-weight: 800; font-size: 1.3rem; font-family: var(--mono); }
+.pf-avatar-fallback {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  background: var(--accent-dim); color: var(--accent2); font-weight: 800; font-size: 2rem; font-family: var(--mono);
+}
+.pf-display-name { position: relative; font-size: 1.1rem; font-weight: 800; letter-spacing: -.02em; }
+.pf-display-email { position: relative; font-size: .78rem; color: var(--text3); margin-top: .2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-target {
+  position: relative; display: none; align-items: center; gap: 6px; margin: .8rem auto 0; width: fit-content; max-width: 100%;
+  font-size: .72rem; font-weight: 600; color: var(--accent2); background: var(--accent-dim);
+  border: 1px solid rgba(61,125,255,.25); padding: .22rem .7rem; border-radius: 20px;
+}
+.pf-target.show { display: inline-flex; }
+.pf-target span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.pf-strength { display: flex; align-items: center; gap: .9rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+.pf-strength-ring { position: relative; width: 54px; height: 54px; flex-shrink: 0; }
+.pf-strength-ring svg { display: block; transform: rotate(-90deg); }
+.pf-strength-ring .num { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); font-weight: 700; font-size: .78rem; }
+.pf-strength-txt b { display: block; font-size: .84rem; font-weight: 700; }
+.pf-strength-txt small { color: var(--text3); font-size: .72rem; line-height: 1.35; display: block; }
+
+.pf-quick-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px solid var(--border); }
+.pf-qs { padding: .85rem .5rem; text-align: center; border-right: 1px solid var(--border); }
+.pf-qs:last-child { border-right: none; }
+.pf-qs-val { font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; }
+.pf-qs-lbl { font-size: .6rem; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; font-family: var(--mono); margin-top: .1rem; }
+
+.pf-nav { padding: .6rem; display: flex; flex-direction: column; gap: 2px; }
+.pf-nav a {
+  display: flex; align-items: center; gap: 10px; padding: .62rem .8rem; border-radius: 9px;
+  font-size: .85rem; font-weight: 500; color: var(--text2); text-decoration: none;
+  transition: all .18s var(--ease); white-space: nowrap;
+}
+.pf-nav a i { font-size: 1.05rem; color: var(--text3); transition: color .18s var(--ease); }
+.pf-nav a:hover { background: var(--bg3); color: var(--text); }
+.pf-nav a:hover i { color: var(--accent2); }
+.pf-nav a.active { background: var(--accent-dim); color: var(--accent2); font-weight: 600; }
+.pf-nav a.active i { color: var(--accent2); }
+@media (max-width: 960px) {
+  .pf-nav { flex-direction: row; overflow-x: auto; }
+}
+
+/* ══════════════════════════════════════════════
+   RIGHT — tab panels and shared card system
+════════════════════════════════════════════ */
+.pf-main { display: block; min-width: 0; scroll-margin-top: 84px; }
+.pf-panel { display: none; flex-direction: column; gap: 1.25rem; }
+.pf-panel.active { display: flex; animation: pfIn .38s var(--ease) both; }
+@keyframes pfIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.pf-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 1.3rem 1.5rem; min-width: 0;
+}
+.pf-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 1.1rem; }
+.pf-card-ic {
+  width: 36px; height: 36px; border-radius: 10px; background: var(--accent-dim);
+  border: 1px solid rgba(61,125,255,.22); display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem; color: var(--accent2); flex-shrink: 0;
+}
+.pf-card-head h2 { font-size: .97rem; font-weight: 700; letter-spacing: -.01em; }
+.pf-card-head p { font-size: .76rem; color: var(--text3); margin-top: .08rem; }
+.pf-card-head .more {
+  margin-left: auto; font-size: .76rem; color: var(--accent2); text-decoration: none; font-weight: 600;
+  background: none; border: none; cursor: pointer; font-family: var(--font); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.pf-card-head .more:hover { text-decoration: underline; }
+
+.pf-row { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.pf-row.wide-l { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+.pf-row.wide-r { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); }
+@media (max-width: 1180px) { .pf-row, .pf-row.wide-l, .pf-row.wide-r { grid-template-columns: minmax(0, 1fr); } }
+
+/* KPI tiles */
+.pf-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; }
+.pf-kpi {
+  position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1.1rem 1.25rem;
+}
+.pf-kpi::after {
+  content: ''; position: absolute; right: -34px; top: -34px; width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, var(--glow, rgba(61,125,255,.16)), transparent 70%); pointer-events: none;
+}
+.pf-kpi-top { display: flex; align-items: center; gap: 8px; color: var(--text3); font-family: var(--mono); font-size: .66rem; text-transform: uppercase; letter-spacing: .07em; }
+.pf-kpi-top i { font-size: 1.05rem; color: var(--accent2); }
+.pf-kpi-val { position: relative; font-size: 1.9rem; font-weight: 800; letter-spacing: -.035em; line-height: 1.15; margin-top: .5rem; }
+.pf-kpi-val small { font-size: .85rem; font-weight: 600; color: var(--text3); margin-left: .2rem; letter-spacing: 0; }
+.pf-kpi-sub { position: relative; font-size: .75rem; color: var(--text3); margin-top: .1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-kpi.gold { --glow: rgba(234,179,8,.18); }
+.pf-kpi.gold .pf-kpi-top i { color: var(--gold2); }
+.pf-kpi.green { --glow: rgba(34,197,94,.16); }
+.pf-kpi.green .pf-kpi-top i { color: var(--green); }
+.pf-kpi.purple { --glow: rgba(139,124,246,.18); }
+.pf-kpi.purple .pf-kpi-top i { color: var(--purple); }
+
+/* Empty / loading states */
+.pf-empty { text-align: center; padding: 1.7rem 1rem; color: var(--text3); font-size: .84rem; line-height: 1.55; }
+.pf-empty i { display: block; font-size: 1.9rem; margin-bottom: .45rem; color: var(--border2); }
+.pf-empty a, .pf-empty button.lnk { color: var(--accent2); font-weight: 600; text-decoration: none; background: none; border: none; cursor: pointer; font-family: var(--font); font-size: inherit; }
+.pf-empty a:hover, .pf-empty button.lnk:hover { text-decoration: underline; }
+.pf-skel { border-radius: 10px; background: linear-gradient(90deg, var(--bg3), var(--surface2), var(--bg3)); background-size: 220% 100%; animation: pfShimmer 1.4s linear infinite; }
+@keyframes pfShimmer { from { background-position: 100% 0; } to { background-position: -120% 0; } }
+
+/* ── Radar chart ── */
+.rd-wrap svg { display: block; width: 100%; height: auto; max-height: 310px; }
+.rd-ring { fill: none; stroke: var(--border2); stroke-width: 1; }
+.rd-axis { stroke: var(--border); stroke-width: 1; }
+.rd-area { fill: rgba(61,125,255,.22); stroke: var(--accent2); stroke-width: 2; stroke-linejoin: round; animation: rdIn .8s var(--ease) both; }
+.rd-dot { fill: var(--accent2); stroke: var(--bg); stroke-width: 2; }
+.rd-label { fill: var(--text2); font-size: 11px; font-family: var(--font); font-weight: 500; }
+.rd-val { fill: var(--accent2); font-size: 10px; font-family: var(--mono); font-weight: 600; }
+@keyframes rdIn { from { opacity: 0; transform: scale(.35); } to { opacity: 1; transform: none; } }
+
+/* ── Role recommendations ── */
+.rl-row { display: flex; align-items: center; gap: .8rem; padding: .7rem .85rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 11px; margin-bottom: .5rem; }
+.rl-row:last-child { margin-bottom: 0; }
+.rl-rank { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-weight: 700; font-size: .75rem; background: var(--surface2); color: var(--text2); flex-shrink: 0; }
+.rl-row.top .rl-rank { background: var(--accent); color: #fff; box-shadow: 0 0 12px rgba(61,125,255,.5); }
+.rl-info { flex: 1; min-width: 0; }
+.rl-title { font-size: .86rem; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rl-title a { color: var(--text); text-decoration: none; }
+.rl-title a:hover { color: var(--accent2); }
+.rl-tier { font-size: .56rem; font-family: var(--mono); font-weight: 700; padding: .1rem .45rem; border-radius: 20px; letter-spacing: .04em; background: var(--surface2); color: var(--text3); }
+.rl-tier.best { background: var(--accent-dim); color: var(--accent2); }
+.rl-tier.strong { background: var(--green-dim); color: var(--green); }
+.rl-tier.possible { background: var(--purple-dim); color: var(--purple); }
+.rl-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: .45rem; }
+.rl-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width .9s var(--ease); }
+.rl-pct { font-family: var(--mono); font-weight: 700; font-size: .9rem; color: var(--accent2); min-width: 42px; text-align: right; }
+.rl-add {
+  background: none; border: 1px solid var(--border2); color: var(--text2); border-radius: 8px; padding: .28rem .6rem;
+  font-size: .7rem; font-weight: 600; cursor: pointer; font-family: var(--font); white-space: nowrap; transition: all .15s var(--ease);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.rl-add:hover:not(:disabled) { color: var(--text); border-color: var(--accent); }
+.rl-add:disabled { color: var(--green); border-color: rgba(34,197,94,.3); cursor: default; }
+
+/* ── Activity heatmap ── */
+.hm-wrap { overflow-x: auto; padding-bottom: .35rem; }
+.hm-inner { display: inline-block; min-width: 100%; }
+.hm-months { display: grid; grid-auto-flow: column; grid-auto-columns: 13px; gap: 4px; margin-left: 30px; height: 15px; font-size: .62rem; color: var(--text3); font-family: var(--mono); }
+.hm-months span { white-space: nowrap; }
+.hm-body { display: flex; gap: 8px; }
+.hm-days { display: grid; grid-template-rows: repeat(7, 13px); gap: 4px; width: 22px; font-size: .58rem; color: var(--text3); font-family: var(--mono); line-height: 13px; }
+.hm-grid { display: grid; grid-template-rows: repeat(7, 13px); grid-auto-flow: column; grid-auto-columns: 13px; gap: 4px; }
+.hm-cell { border-radius: 3px; background: var(--bg3); border: 1px solid var(--border); }
+.hm-cell[data-l="1"] { background: rgba(61,125,255,.28); border-color: rgba(61,125,255,.35); }
+.hm-cell[data-l="2"] { background: rgba(61,125,255,.5); border-color: rgba(61,125,255,.55); }
+.hm-cell[data-l="3"] { background: rgba(61,125,255,.75); border-color: rgba(111,162,255,.7); }
+.hm-cell[data-l="4"] { background: var(--accent2); border-color: var(--accent2); box-shadow: 0 0 8px rgba(111,162,255,.5); }
+.hm-cell.future { visibility: hidden; }
+.hm-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .6rem; margin-top: .9rem; font-size: .74rem; color: var(--text3); }
+.hm-legend { display: flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: .62rem; }
+.hm-legend .hm-cell { width: 11px; height: 11px; }
+.hm-stats { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+.hm-stats b { color: var(--text); font-weight: 700; }
+.hm-stats .flame { color: var(--gold2); }
+
+/* ── Timeline (recent activity) ── */
+.tl-item { display: flex; gap: .8rem; padding: .55rem 0; border-bottom: 1px solid var(--border); }
+.tl-item:last-child { border-bottom: none; padding-bottom: 0; }
+.tl-dot { width: 22px; height: 22px; border-radius: 50%; background: var(--green-dim); color: var(--green); display: grid; place-items: center; font-size: .85rem; flex-shrink: 0; margin-top: .1rem; }
+.tl-txt { min-width: 0; flex: 1; }
+.tl-txt b { display: block; font-size: .83rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-txt small { font-size: .72rem; color: var(--text3); }
+
+/* ── Profile strength checklist ── */
+.ck-item { display: flex; align-items: center; gap: .7rem; padding: .55rem 0; border-bottom: 1px solid var(--border); font-size: .83rem; }
+.ck-item:last-child { border-bottom: none; padding-bottom: 0; }
+.ck-box { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border2); display: grid; place-items: center; font-size: .85rem; color: transparent; flex-shrink: 0; }
+.ck-item.done .ck-box { background: var(--green); border-color: var(--green); color: #07140c; }
+.ck-item.done .ck-label { color: var(--text3); text-decoration: line-through; text-decoration-color: var(--border2); }
+.ck-label { flex: 1; }
+.ck-go { background: none; border: none; color: var(--accent2); font-size: .72rem; font-weight: 600; cursor: pointer; font-family: var(--font); }
+.ck-go:hover { text-decoration: underline; }
+
+/* ── Next-up topics ── */
+.nx-item { display: flex; align-items: center; gap: .75rem; padding: .62rem .8rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; margin-bottom: .45rem; text-decoration: none; color: inherit; transition: all .18s var(--ease); }
+.nx-item:last-child { margin-bottom: 0; }
+.nx-item:hover { border-color: var(--accent); transform: translateX(3px); }
+.nx-n { width: 22px; height: 22px; border-radius: 6px; background: var(--accent-dim); color: var(--accent2); display: grid; place-items: center; font-family: var(--mono); font-size: .7rem; font-weight: 700; flex-shrink: 0; }
+.nx-txt { min-width: 0; flex: 1; }
+.nx-txt b { display: block; font-size: .84rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nx-txt small { font-size: .7rem; color: var(--text3); }
+.nx-item i { color: var(--text3); }
+
+/* ── Matched opportunities ── */
+.op-item { display: block; padding: .75rem .9rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 11px; margin-bottom: .5rem; text-decoration: none; color: inherit; transition: all .18s var(--ease); }
+.op-item:last-child { margin-bottom: 0; }
+.op-item:hover { border-color: var(--accent); transform: translateY(-1px); }
+.op-top { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .35rem; }
+.op-type { font-family: var(--mono); font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: .12rem .5rem; border-radius: 5px; }
+.op-type.hackathon { background: var(--gold-dim); color: var(--gold2); }
+.op-type.internship { background: var(--blue-dim); color: var(--accent2); }
+.op-type.job { background: var(--green-dim); color: var(--green); }
+.op-type.techfest { background: var(--purple-dim); color: var(--purple); }
+.op-type.workshop { background: rgba(239,68,68,.12); color: #f3a9a9; }
+.op-due { font-size: .68rem; color: var(--text3); font-family: var(--mono); }
+.op-due.soon { color: var(--gold2); }
+.op-title { font-size: .86rem; font-weight: 700; line-height: 1.35; }
+.op-org { font-size: .74rem; color: var(--text3); margin-top: .1rem; }
+.op-chips { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .5rem; }
+.op-chip { font-family: var(--mono); font-size: .62rem; padding: .1rem .45rem; border-radius: 5px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.op-chip.match { color: var(--green); border-color: rgba(34,197,94,.3); background: var(--green-dim); }
+
+/* ── Skill mix donut ── */
+.dn-wrap { display: flex; align-items: center; gap: 1.6rem; flex-wrap: wrap; }
+.dn-chart { position: relative; width: 172px; height: 172px; flex-shrink: 0; }
+.dn-chart svg { display: block; transform: rotate(-90deg); }
+.dn-seg { fill: none; stroke-width: 22; transition: stroke-width .15s var(--ease), opacity .15s var(--ease); }
+.dn-chart:hover .dn-seg { opacity: .55; }
+.dn-chart .dn-seg:hover { opacity: 1; stroke-width: 26; }
+.dn-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+.dn-center b { font-size: 1.7rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+.dn-center small { font-size: .62rem; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+.dn-legend { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: .55rem; }
+.dn-row { display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: .6rem; font-size: .8rem; }
+.dn-dot { width: 10px; height: 10px; border-radius: 3px; }
+.dn-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dn-row .ct { font-family: var(--mono); color: var(--text3); font-size: .74rem; }
+.pf-note { font-size: .72rem; color: var(--text3); margin-top: 1rem; line-height: 1.5; }
+
+/* ── Roadmap cards + section bars ── */
+.rc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .9rem; }
+.rc-card { display: flex; align-items: center; gap: .95rem; padding: 1rem 1.1rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 13px; text-decoration: none; color: inherit; transition: all .18s var(--ease); }
+.rc-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.rc-ring { position: relative; width: 58px; height: 58px; flex-shrink: 0; }
+.rc-ring svg { display: block; transform: rotate(-90deg); }
+.rc-ring span { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); font-size: .72rem; font-weight: 700; }
+.rc-info { min-width: 0; flex: 1; }
+.rc-info b { display: flex; align-items: center; gap: 6px; font-size: .88rem; font-weight: 700; }
+.rc-info b em { font-style: normal; }
+.rc-info small { display: block; font-size: .72rem; color: var(--text3); margin-top: .15rem; }
+.rc-badge { font-size: .55rem; font-family: var(--mono); background: var(--accent-dim); color: var(--accent2); padding: .1rem .4rem; border-radius: 9px; letter-spacing: .03em; font-weight: 700; }
+.rc-badge.done { background: var(--green-dim); color: var(--green); }
+
+.sb-select { background: var(--bg3); border: 1px solid var(--border); border-radius: 9px; color: var(--text); padding: .45rem .7rem; font-size: .8rem; font-family: var(--font); outline: none; margin-left: auto; max-width: 220px; }
+.sb-select:focus { border-color: var(--accent); }
+.sb-list { max-height: 360px; overflow-y: auto; padding-right: .4rem; display: flex; flex-direction: column; gap: .6rem; }
+.sb-row { display: grid; grid-template-columns: minmax(110px, 1.1fr) minmax(0, 2fr) 54px; align-items: center; gap: .8rem; font-size: .8rem; }
+.sb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text2); }
+.sb-track { height: 8px; background: var(--bg3); border-radius: 5px; overflow: hidden; border: 1px solid var(--border); }
+.sb-track i { display: block; height: 100%; width: 0; border-radius: 5px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .9s var(--ease); }
+.sb-track i.full { background: linear-gradient(90deg, #16a34a, var(--green)); }
+.sb-num { font-family: var(--mono); font-size: .72rem; color: var(--text3); text-align: right; }
+
+/* ── Form / settings (kept from the previous profile page) ── */
 .pf-field { margin-bottom: 1rem; }
-.pf-field label { display: block; font-size: .74rem; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .4rem; }
-.pf-field .pf-static { font-size: .9rem; color: var(--text2); }
-.pf-inline-edit { display: flex; gap: .5rem; }
-.pf-inline-edit input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: .55rem .8rem; color: var(--text); font-size: .87rem; outline: none; }
+.pf-field label { display: block; font-size: .7rem; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .4rem; }
+.pf-field .pf-static { font-size: .9rem; color: var(--text2); padding: .55rem 0; }
+.pf-inline-edit { display: flex; gap: .55rem; }
+.pf-inline-edit input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 9px;
+  padding: .6rem .9rem; color: var(--text); font-size: .88rem; outline: none; font-family: var(--font);
+  transition: border-color .2s var(--ease);
+}
 .pf-inline-edit input:focus { border-color: var(--accent); }
-.pf-btn { padding: .55rem 1rem; border-radius: 7px; font-size: .82rem; font-weight: 600; cursor: pointer; border: none; font-family: var(--font); transition: all .15s; }
-.pf-btn.primary { background: var(--accent); color: #000; }
-.pf-btn.primary:hover { background: var(--accent2); }
+
+.pf-btn {
+  padding: .6rem 1.1rem; border-radius: 9px; font-size: .82rem; font-weight: 600; cursor: pointer;
+  border: none; font-family: var(--font); transition: all .18s var(--ease);
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.pf-btn.primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(61,125,255,.25); }
+.pf-btn.primary:hover { background: var(--accent2); transform: translateY(-1px); }
 .pf-btn.outline { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
 .pf-btn.outline:hover { color: var(--text); border-color: var(--accent); }
-.pf-btn:disabled { opacity: .5; cursor: not-allowed; }
+.pf-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
-/* Password */
 .pf-pw-note { font-size: .82rem; color: var(--text3); line-height: 1.6; margin-bottom: 1rem; }
-.pf-pw-form { display: flex; flex-direction: column; gap: .7rem; max-width: 320px; }
-.pf-pw-form input { background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: .6rem .8rem; color: var(--text); font-size: .86rem; outline: none; }
+.pf-pw-form { display: flex; flex-direction: column; gap: .7rem; max-width: 340px; }
+.pf-pw-form input {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 9px; padding: .65rem .9rem;
+  color: var(--text); font-size: .86rem; outline: none; transition: border-color .2s var(--ease); font-family: var(--font);
+}
 .pf-pw-form input:focus { border-color: var(--accent); }
 
-/* Skills */
-.pf-chip-group-head { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); font-family: var(--mono); margin: 1rem 0 .6rem; }
-.pf-chip-group-head:first-child { margin-top: 0; }
+.pf-chip-group-head { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); font-family: var(--mono); margin: 1.1rem 0 .6rem; display: flex; align-items: center; gap: 7px; }
+.pf-chip-group-head:first-of-type { margin-top: 0; }
+.pf-chip-group-head i { color: var(--accent2); font-size: .95rem; }
+.pf-dirty { display: none; margin-left: auto; font-size: .68rem; font-family: var(--mono); color: var(--gold2); background: var(--gold-dim); border: 1px solid rgba(234,179,8,.25); padding: .15rem .6rem; border-radius: 20px; text-transform: none; letter-spacing: 0; }
+.pf-dirty.show { display: inline-flex; }
 .pf-chips { display: flex; flex-wrap: wrap; gap: .5rem; min-height: 2rem; }
-.pf-chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: .38rem .5rem .38rem .9rem; font-size: .82rem; display: flex; align-items: center; gap: 8px; }
-.pf-chip button { background: var(--surface2); border: none; color: var(--text3); cursor: pointer; font-size: .68rem; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.pf-chip {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 20px;
+  padding: .38rem .5rem .38rem .9rem; font-size: .82rem; display: flex; align-items: center; gap: 8px;
+  transition: border-color .15s var(--ease);
+}
+.pf-chip:hover { border-color: var(--border2); }
+.pf-chip button {
+  background: var(--surface2); border: none; color: var(--text3); cursor: pointer; font-size: .7rem;
+  width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  transition: all .15s var(--ease);
+}
 .pf-chip button:hover { color: #ef4444; background: rgba(239,68,68,.12); }
 .pf-chip-empty { font-size: .8rem; color: var(--text3); font-style: italic; }
-.pf-chip-add { display: flex; gap: .5rem; margin-top: .9rem; }
-.pf-chip-add input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: .55rem .8rem; color: var(--text); font-size: .84rem; outline: none; }
+.pf-chip-add { display: flex; gap: .5rem; margin-top: 1rem; }
+.pf-chip-add input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 9px;
+  padding: .6rem .9rem; color: var(--text); font-size: .85rem; outline: none; font-family: var(--font);
+  transition: border-color .2s var(--ease);
+}
 .pf-chip-add input:focus { border-color: var(--accent); }
 
-/* Roadmaps */
-.pf-rm-list { display: flex; flex-direction: column; gap: .5rem; }
-.pf-rm-item { display: flex; align-items: center; gap: .75rem; padding: .65rem .9rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 9px; text-decoration: none; color: inherit; transition: all .15s; }
-.pf-rm-item:hover { border-color: var(--border2); }
-.pf-rm-item .ic { font-size: 1.1rem; }
-.pf-rm-item .name { flex: 1; font-size: .87rem; font-weight: 600; }
-.pf-rm-item .pct { font-family: var(--mono); font-size: .78rem; color: var(--text3); }
-.pf-rm-item.done .pct { color: var(--green); }
-.pf-empty-note { font-size: .82rem; color: var(--text3); font-style: italic; }
-
-/* Resume */
 .pf-resume-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
 .pf-resume-actions input[type=file] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-panel.active, .rd-area, .pf-skel { animation: none; }
+  .rl-bar i, .sb-track i, .nx-item, .rc-card { transition: none; }
+}
 {% endblock %}
 
 {% block content %}
-<div class="pf-wrap">
-  <div class="pf-head">
-    <h1>Profile &amp; Settings</h1>
-    <p>Manage your account, skills, and roadmap progress.</p>
-  </div>
+<div class="pf-layout">
 
-  <!-- ACCOUNT -->
-  <div class="pf-section">
-    <h2><span class="ic">👤</span> Account</h2>
-    <div class="pf-account-row">
+  <!-- ══ LEFT: identity, profile strength, tabs ══ -->
+  <aside class="pf-side">
+    <div class="pf-identity">
       <div class="pf-avatar">
         {% if user.avatar_url %}
           <img src="{{ user.avatar_url }}" alt="">
@@ -85,90 +353,269 @@
           <div class="pf-avatar-fallback">{{ (user.name or user.email or '?')[0]|upper }}</div>
         {% endif %}
       </div>
-      <div style="flex:1">
-        <div class="pf-field" style="margin-bottom:.3rem">
-          <label>Display name</label>
+      <div class="pf-display-name" id="sideName">{{ user.name or 'Your Account' }}</div>
+      <div class="pf-display-email">{{ user.email }}</div>
+      <div class="pf-target" id="sideTarget"><i class='bx bx-target-lock'></i><span id="sideTargetTxt"></span></div>
+    </div>
+
+    <div class="pf-strength">
+      <div class="pf-strength-ring">
+        <svg width="54" height="54" viewBox="0 0 54 54">
+          <circle cx="27" cy="27" r="23" fill="none" stroke="var(--border2)" stroke-width="5"/>
+          <circle id="strengthArc" cx="27" cy="27" r="23" fill="none" stroke="var(--accent2)" stroke-width="5"
+                  stroke-linecap="round" stroke-dasharray="144.5" stroke-dashoffset="144.5"
+                  style="transition: stroke-dashoffset .9s var(--ease)"/>
+        </svg>
+        <div class="num" id="strengthNum">0%</div>
+      </div>
+      <div class="pf-strength-txt">
+        <b>Profile strength</b>
+        <small id="strengthHint">Complete the checklist to sharpen your matches.</small>
+      </div>
+    </div>
+
+    <div class="pf-quick-stats">
+      <div class="pf-qs"><div class="pf-qs-val">{{ all_roadmaps|length }}</div><div class="pf-qs-lbl">Roadmaps</div></div>
+      <div class="pf-qs"><div class="pf-qs-val">{{ completed_roadmaps|length }}</div><div class="pf-qs-lbl">Completed</div></div>
+      <div class="pf-qs"><div class="pf-qs-val" id="sideSkillCount">—</div><div class="pf-qs-lbl">Skills</div></div>
+    </div>
+
+    <nav class="pf-nav" id="pfNav">
+      <a href="#overview" data-tab="overview" class="active"><i class='bx bx-line-chart'></i> Overview</a>
+      <a href="#skills" data-tab="skills"><i class='bx bx-wrench'></i> Skills &amp; Resume</a>
+      <a href="#roadmaps" data-tab="roadmaps"><i class='bx bx-map-alt'></i> Roadmaps</a>
+      <a href="#account" data-tab="account"><i class='bx bx-user-circle'></i> Account</a>
+    </nav>
+  </aside>
+
+  <!-- ══ RIGHT: tab panels ══ -->
+  <div class="pf-main" id="pfMain">
+
+    <!-- ───────────── OVERVIEW ───────────── -->
+    <section class="pf-panel active" id="tab-overview">
+
+      <div class="pf-kpis">
+        <div class="pf-kpi">
+          <div class="pf-kpi-top"><i class='bx bx-wrench'></i> Skills</div>
+          <div class="pf-kpi-val" id="kpiSkills">—</div>
+          <div class="pf-kpi-sub" id="kpiSkillsSub">on your profile</div>
+        </div>
+        <div class="pf-kpi green">
+          <div class="pf-kpi-top"><i class='bx bx-check-circle'></i> Topics done</div>
+          <div class="pf-kpi-val" id="kpiTopics">—</div>
+          <div class="pf-kpi-sub" id="kpiTopicsSub">across your roadmaps</div>
+        </div>
+        <div class="pf-kpi gold">
+          <div class="pf-kpi-top"><i class='bx bxs-hot'></i> Streak</div>
+          <div class="pf-kpi-val" id="kpiStreak">—</div>
+          <div class="pf-kpi-sub" id="kpiStreakSub">consecutive days</div>
+        </div>
+        <div class="pf-kpi purple">
+          <div class="pf-kpi-top"><i class='bx bx-target-lock'></i> Best role fit</div>
+          <div class="pf-kpi-val" id="kpiFit">—</div>
+          <div class="pf-kpi-sub" id="kpiFitSub">from your skills</div>
+        </div>
+      </div>
+
+      <div class="pf-row wide-r">
+        <div class="pf-card">
+          <div class="pf-card-head">
+            <div class="pf-card-ic"><i class='bx bx-radar'></i></div>
+            <div><h2>Role fit</h2><p>How your skills line up with each role</p></div>
+          </div>
+          <div class="rd-wrap" id="radarBox"><div class="pf-skel" style="height:260px"></div></div>
+        </div>
+
+        <div class="pf-card">
+          <div class="pf-card-head">
+            <div class="pf-card-ic"><i class='bx bx-bulb'></i></div>
+            <div><h2>Recommended roles</h2><p>Ranked by your resume</p></div>
+            <a class="more" href="/roles">All roles <i class='bx bx-right-arrow-alt'></i></a>
+          </div>
+          <div id="roleList"><div class="pf-skel" style="height:260px"></div></div>
+        </div>
+      </div>
+
+      <div class="pf-row wide-l">
+        <div class="pf-card">
+          <div class="pf-card-head">
+            <div class="pf-card-ic"><i class='bx bx-calendar-check'></i></div>
+            <div><h2>Learning activity</h2><p>Topics you checked off in the last 17 weeks</p></div>
+          </div>
+          <div id="heatBox"><div class="pf-skel" style="height:140px"></div></div>
+        </div>
+
+        <div class="pf-card">
+          <div class="pf-card-head">
+            <div class="pf-card-ic"><i class='bx bx-shield-quarter'></i></div>
+            <div><h2>Profile checklist</h2><p>Small steps, better recommendations</p></div>
+          </div>
+          <div id="checklist"></div>
+        </div>
+      </div>
+
+      <div class="pf-row">
+        <div class="pf-card">
+          <div class="pf-card-head">
+            <div class="pf-card-ic"><i class='bx bx-rocket'></i></div>
+            <div><h2>Next up</h2><p id="nextUpSub">What to learn next on your default roadmap</p></div>
+            <a class="more" href="#roadmaps" data-goto="roadmaps">Progress <i class='bx bx-right-arrow-alt'></i></a>
+          </div>
+          <div id="nextUp"><div class="pf-skel" style="height:200px"></div></div>
+        </div>
+
+        <div class="pf-card">
+          <div class="pf-card-head">
+            <div class="pf-card-ic"><i class='bx bx-briefcase-alt-2'></i></div>
+            <div><h2>Matched opportunities</h2><p>Picked from your skills and deadlines</p></div>
+            <a class="more" href="/opportunities">See all <i class='bx bx-right-arrow-alt'></i></a>
+          </div>
+          <div id="oppList"><div class="pf-skel" style="height:200px"></div></div>
+        </div>
+      </div>
+
+      <div class="pf-card">
+        <div class="pf-card-head">
+          <div class="pf-card-ic"><i class='bx bx-time-five'></i></div>
+          <div><h2>Recent activity</h2><p>Your latest completed topics</p></div>
+        </div>
+        <div id="timeline"></div>
+      </div>
+    </section>
+
+    <!-- ───────────── SKILLS & RESUME ───────────── -->
+    <section class="pf-panel" id="tab-skills">
+
+      <div class="pf-card">
+        <div class="pf-card-head">
+          <div class="pf-card-ic"><i class='bx bx-pie-chart-alt-2'></i></div>
+          <div><h2>Skill mix</h2><p>Where your skills are concentrated</p></div>
+        </div>
+        <div id="skillMix"></div>
+      </div>
+
+      <div class="pf-card">
+        <div class="pf-card-head">
+          <div class="pf-card-ic"><i class='bx bx-wrench'></i></div>
+          <div><h2>Skills pool</h2><p>Used to match roadmaps and opportunities to you</p></div>
+        </div>
+        <div class="pf-chip-group-head"><i class='bx bx-code-alt'></i> Technical skills <span class="pf-dirty" id="dirtyBadge">Unsaved changes</span></div>
+        <div class="pf-chips" id="techChips"></div>
+        <div class="pf-chip-group-head"><i class='bx bx-compass'></i> Domain knowledge</div>
+        <div class="pf-chips" id="domainChips"></div>
+        <div class="pf-chip-add">
+          <input type="text" id="newSkillInput" placeholder="Add a skill and press Enter">
+        </div>
+        <div style="margin-top:1.1rem">
+          <button class="pf-btn primary" id="saveSkillsBtn"><i class='bx bx-check'></i> Save skills</button>
+        </div>
+      </div>
+
+      <div class="pf-card">
+        <div class="pf-card-head">
+          <div class="pf-card-ic"><i class='bx bx-file'></i></div>
+          <div><h2>Resume</h2><p>Re-upload to refresh your extracted skills</p></div>
+        </div>
+        <p class="pf-pw-note">
+          Re-uploading re-extracts your skills and replaces the Skills pool above once you review and save it.
+          Full resume editing isn't built yet — for now you can download a plain-text snapshot of your current skills.
+        </p>
+        <div class="pf-resume-actions">
+          <label class="pf-btn outline" for="resumeReupload"><i class='bx bx-upload'></i> Re-upload resume</label>
+          <input type="file" id="resumeReupload" accept=".pdf,.jpg,.jpeg,.png">
+          <button class="pf-btn outline" id="downloadSummaryBtn"><i class='bx bx-download'></i> Download skills summary (.txt)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── ROADMAPS ───────────── -->
+    <section class="pf-panel" id="tab-roadmaps">
+
+      <div class="pf-card">
+        <div class="pf-card-head">
+          <div class="pf-card-ic"><i class='bx bx-map-alt'></i></div>
+          <div><h2>Your roadmaps</h2><p>Learning paths and where you stand on each</p></div>
+          <a class="more" href="/roles">Add another <i class='bx bx-plus'></i></a>
+        </div>
+        {% if all_roadmaps %}
+        <div class="rc-grid" id="rcGrid">
+          {% for rm in all_roadmaps %}
+          <a href="/roadmap/{{ rm.type }}/{{ rm.slug }}" class="rc-card" data-pct="{{ rm.progress_pct }}">
+            <div class="rc-ring">
+              <svg width="58" height="58" viewBox="0 0 58 58">
+                <circle cx="29" cy="29" r="25" fill="none" stroke="var(--border2)" stroke-width="5"/>
+                <circle class="rc-arc" cx="29" cy="29" r="25" fill="none" stroke="{{ 'var(--green)' if rm.progress_pct >= 100 else 'var(--accent2)' }}" stroke-width="5"
+                        stroke-linecap="round" stroke-dasharray="157.1" stroke-dashoffset="157.1"
+                        style="transition: stroke-dashoffset .9s var(--ease)"/>
+              </svg>
+              <span>{{ rm.progress_pct|round|int }}%</span>
+            </div>
+            <div class="rc-info">
+              <b><em>{{ rm.icon }}</em> {{ rm.title }}</b>
+              <small>
+                {% if rm.progress_pct >= 100 %}<span class="rc-badge done">COMPLETED</span>
+                {% elif rm.is_primary %}<span class="rc-badge">DEFAULT</span>
+                {% else %}{{ rm.type|capitalize }} roadmap{% endif %}
+              </small>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="pf-empty"><i class='bx bx-map-alt'></i>No roadmaps yet. <a href="/roles">Browse role roadmaps</a> to pick your first one.</div>
+        {% endif %}
+      </div>
+
+      <div class="pf-card">
+        <div class="pf-card-head">
+          <div class="pf-card-ic"><i class='bx bx-bar-chart-alt-2'></i></div>
+          <div><h2>Section progress</h2><p>Topics completed in each section</p></div>
+          {% if all_roadmaps %}
+          <select class="sb-select" id="rmSelect" aria-label="Choose roadmap">
+            {% for rm in all_roadmaps %}<option value="{{ rm.slug }}" data-type="{{ rm.type }}"{% if rm.is_primary %} selected{% endif %}>{{ rm.title }}</option>{% endfor %}
+          </select>
+          {% endif %}
+        </div>
+        <div id="sectionBars">
+          {% if all_roadmaps %}<div class="pf-skel" style="height:220px"></div>
+          {% else %}<div class="pf-empty"><i class='bx bx-bar-chart-alt-2'></i>Pick a roadmap to see your progress by section.</div>{% endif %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── ACCOUNT ───────────── -->
+    <section class="pf-panel" id="tab-account">
+
+      <div class="pf-card">
+        <div class="pf-card-head">
+          <div class="pf-card-ic"><i class='bx bx-user-circle'></i></div>
+          <div><h2>Account</h2><p>How you appear across CareerCompass</p></div>
+        </div>
+        <div class="pf-field">
+          <label for="nameInput">Display name</label>
           <div class="pf-inline-edit">
-            <input type="text" id="nameInput" value="{{ user.name or '' }}" placeholder="Add your name">
+            <input type="text" id="nameInput" value="{{ user.name or '' }}" placeholder="Add your name" maxlength="100">
             <button class="pf-btn primary" id="saveNameBtn">Save</button>
           </div>
         </div>
+        <div class="pf-field" style="margin-bottom:0">
+          <label>Email</label>
+          <div class="pf-static">{{ user.email }}</div>
+        </div>
       </div>
-    </div>
-    <div class="pf-field">
-      <label>Email</label>
-      <div class="pf-static">{{ user.email }}</div>
-    </div>
-  </div>
 
-  <!-- PASSWORD -->
-  <div class="pf-section">
-    <h2><span class="ic">🔒</span> Password</h2>
-    <div id="pwSection">
-      <p class="pf-pw-note">Loading account details…</p>
-    </div>
-  </div>
+      <div class="pf-card">
+        <div class="pf-card-head">
+          <div class="pf-card-ic"><i class='bx bx-lock-alt'></i></div>
+          <div><h2>Security</h2><p>Manage how you sign in</p></div>
+        </div>
+        <div id="pwSection">
+          <p class="pf-pw-note">Loading account details…</p>
+        </div>
+      </div>
+    </section>
 
-  <!-- SKILLS POOL -->
-  <div class="pf-section">
-    <h2><span class="ic">🛠️</span> Skills Pool</h2>
-    <div class="pf-chip-group-head">Technical Skills</div>
-    <div class="pf-chips" id="techChips"></div>
-    <div class="pf-chip-group-head">Domain Knowledge</div>
-    <div class="pf-chips" id="domainChips"></div>
-    <div class="pf-chip-add">
-      <input type="text" id="newSkillInput" placeholder="Add a skill and press Enter">
-    </div>
-    <div style="margin-top:1rem">
-      <button class="pf-btn primary" id="saveSkillsBtn">Save Skills</button>
-    </div>
   </div>
-
-  <!-- ROADMAPS -->
-  <div class="pf-section">
-    <h2><span class="ic">🧭</span> Completed Roadmaps</h2>
-    <div class="pf-rm-list">
-      {% for rm in completed_roadmaps %}
-      <a href="/roadmap/{{ rm.type }}/{{ rm.slug }}" class="pf-rm-item done">
-        <span class="ic">{{ rm.icon }}</span>
-        <span class="name">{{ rm.title }}</span>
-        <span class="pct">✓ 100%</span>
-      </a>
-      {% else %}
-      <div class="pf-empty-note">No roadmaps completed yet — keep going!</div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="pf-section">
-    <h2><span class="ic">📍</span> In Progress</h2>
-    <div class="pf-rm-list">
-      {% for rm in in_progress_roadmaps %}
-      <a href="/roadmap/{{ rm.type }}/{{ rm.slug }}" class="pf-rm-item">
-        <span class="ic">{{ rm.icon }}</span>
-        <span class="name">{{ rm.title }}</span>
-        <span class="pct">{{ rm.progress_pct }}%</span>
-      </a>
-      {% else %}
-      <div class="pf-empty-note">Nothing in progress right now.</div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- RESUME -->
-  <div class="pf-section">
-    <h2><span class="ic">📄</span> Resume</h2>
-    <p class="pf-pw-note">
-      Re-upload your resume to re-extract skills (this replaces your current Skills Pool above after you review it).
-      Full resume editing/formatting isn't built yet — for now you can download a plain-text snapshot of your current skills.
-    </p>
-    <div class="pf-resume-actions">
-      <label class="pf-btn outline" for="resumeReupload">📤 Re-upload Resume</label>
-      <input type="file" id="resumeReupload" accept=".pdf,.jpg,.jpeg,.png">
-      <button class="pf-btn outline" id="downloadSummaryBtn">⬇️ Download Skills Summary (.txt)</button>
-    </div>
-  </div>
-
 </div>
 {% endblock %}
 
@@ -181,7 +628,7 @@ import {
   updatePassword, linkWithCredential, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// Same Firebase web config as login.html (public client config, not a secret).
+// Same config as login.html (public by design — safe to commit).
 const firebaseConfig = {
   apiKey: "AIzaSyDU_4-R3s9Ufyv2tZCvF9ZZrTXQ7yf059Q",
   authDomain: "careercompass-dev-fbc26.firebaseapp.com",
@@ -197,7 +644,7 @@ const pwSection = document.getElementById('pwSection');
 
 onAuthStateChanged(auth, (fbUser) => {
   if (!fbUser) {
-    pwSection.innerHTML = `<p class="pf-pw-note">⚠️ Your browser session with Firebase has expired — <a href="/login" style="color:var(--accent)">sign in again</a> to manage your password.</p>`;
+    pwSection.innerHTML = `<p class="pf-pw-note"><i class='bx bxs-error-circle' style="color:#fca5a5"></i> Your browser session with Firebase has expired — <a href="/login" style="color:var(--accent2)">sign in again</a> to manage your password.</p>`;
     return;
   }
   const hasPassword = fbUser.providerData.some(p => p.providerId === 'password');
@@ -221,10 +668,10 @@ function renderPasswordSection(fbUser, hasPassword) {
         const cred = EmailAuthProvider.credential(fbUser.email, document.getElementById('currentPw').value);
         await reauthenticateWithCredential(fbUser, cred);
         await updatePassword(fbUser, document.getElementById('newPw').value);
-        showToast('✅ Password updated');
+        showToast('Password updated');
         document.getElementById('pwForm').reset();
       } catch (err) {
-        showToast('⚠️ ' + friendlyPwError(err));
+        showToast(friendlyPwError(err));
       } finally {
         btn.disabled = false; btn.textContent = 'Update Password';
       }
@@ -248,10 +695,10 @@ function renderPasswordSection(fbUser, hasPassword) {
         await reauthenticateWithPopup(fbUser, new GoogleAuthProvider());
         const cred = EmailAuthProvider.credential(fbUser.email, document.getElementById('newPw').value);
         await linkWithCredential(fbUser, cred);
-        showToast('✅ Password set — you can now sign in with email too');
+        showToast('Password set — you can now sign in with email too');
         renderPasswordSection(fbUser, true);
       } catch (err) {
-        showToast('⚠️ ' + friendlyPwError(err));
+        showToast(friendlyPwError(err));
       } finally {
         btn.disabled = false; btn.textContent = 'Set Password';
       }
@@ -272,53 +719,208 @@ function friendlyPwError(e) {
 </script>
 
 <script>
-/* ── Display name ── */
-document.getElementById('saveNameBtn').addEventListener('click', async () => {
-  const name = document.getElementById('nameInput').value.trim();
-  if (!name) return showToast('⚠️ Name cannot be empty');
-  try {
-    const r = await fetch('/profile/update-name', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ name })
-    });
-    if (!r.ok) throw new Error();
-    showToast('✅ Name updated');
-  } catch (e) {
-    showToast('⚠️ Could not update name');
-  }
-});
+(function () {
+'use strict';
 
-/* ── Skills pool ── */
+/* ════════════════════════════════════════════════════════════════════
+   Helpers
+════════════════════════════════════════════════════════════════════ */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+const safeUrl = (u) => /^https?:\/\//i.test(u || '') ? u : '#';
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const raf = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn));
+
+async function getJSON(url) {
+  const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  let data = null;
+  try { data = await r.json(); } catch (e) { /* non-JSON body */ }
+  return { ok: r.ok, status: r.status, data };
+}
+
+function emptyState(icon, html) {
+  return `<div class="pf-empty"><i class='bx ${icon}'></i>${html}</div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Server-provided data
+════════════════════════════════════════════════════════════════════ */
+const MY_ROADMAPS = {{ all_roadmaps | tojson }};
+const MY_IDS = new Set(MY_ROADMAPS.map(r => r.id));
+const PRIMARY = MY_ROADMAPS.find(r => r.is_primary) || MY_ROADMAPS[0] || null;
+
 let currentSkills = {{ user.resume_skills | tojson }};
-if (!currentSkills || !currentSkills.skills) {
+if (!currentSkills || typeof currentSkills !== 'object' || !currentSkills.skills) {
   currentSkills = { skills: { technical: {}, domain_knowledge: {} }, all_skills_flat: [] };
 }
+
+const state = {
+  totalCompleted: null,   // from /profile/api/overview
+  completions: null,
+  recent: null,
+  roles: null,            // ranked roles from /onboarding/suggested-roles
+  rankingOk: null,
+  nextUpCount: null,
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   Tabs
+════════════════════════════════════════════════════════════════════ */
+const TABS = ['overview', 'skills', 'roadmaps', 'account'];
+
+function showTab(name) {
+  if (!TABS.includes(name)) name = 'overview';
+  document.querySelectorAll('.pf-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  document.querySelectorAll('#pfNav a').forEach(a => {
+    const on = a.dataset.tab === name;
+    a.classList.toggle('active', on);
+    if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+}
+
+document.querySelectorAll('#pfNav a').forEach(a => a.addEventListener('click', (e) => {
+  e.preventDefault();
+  showTab(a.dataset.tab);
+  if (window.innerWidth <= 960) $('pfMain').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+}));
+document.addEventListener('click', (e) => {
+  const go = e.target.closest('[data-goto]');
+  if (!go) return;
+  e.preventDefault();
+  showTab(go.dataset.goto);
+  window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+});
+window.addEventListener('hashchange', () => showTab(location.hash.slice(1)));
+
+/* ════════════════════════════════════════════════════════════════════
+   Skills: data helpers + auto-grouping for the skill-mix chart
+════════════════════════════════════════════════════════════════════ */
+function skillList() {
+  const seen = new Set(), out = [];
+  const add = (s) => {
+    if (typeof s !== 'string') return;
+    const t = s.trim(), k = t.toLowerCase();
+    if (t && !seen.has(k)) { seen.add(k); out.push(t); }
+  };
+  const flat = currentSkills.all_skills_flat;
+  if (Array.isArray(flat) && flat.length) { flat.forEach(add); return out; }
+  const tech = currentSkills.skills?.technical || {};
+  Object.entries(tech).forEach(([k, subs]) => { add(k); (subs || []).forEach(add); });
+  Object.keys(currentSkills.skills?.domain_knowledge || {}).forEach(add);
+  return out;
+}
+
+// Keyword rules, tested top to bottom; first match wins. Keywords of 3 chars or
+// fewer must equal a whole word, 4-char keywords must start a word, longer ones
+// match anywhere — keeps "api" from matching "rapid", "orm" from "performance".
+const CATS = [
+  { name: 'Fundamentals',  color: '#fb923c', kw: ['data structure','algorithm','system design','design pattern','operating system','object oriented','computer science','computer network','networking','concurrency','multithreading','dsa','oop','os','cs'] },
+  { name: 'Databases',     color: '#eab308', kw: ['sql','mysql','postgres','sqlite','mongo','redis','oracle','cassandra','dynamo','elasticsearch','neo4j','firebase','database','mariadb','nosql','prisma','hibernate','dbms','orm'] },
+  { name: 'Data & ML',     color: '#22c55e', kw: ['machine learning','deep learning','tensorflow','pytorch','keras','scikit','sklearn','pandas','numpy','matplotlib','seaborn','plotly','opencv','nlp','langchain','llm','hugging','transformer','spark','hadoop','airflow','kafka','etl','tableau','power bi','powerbi','data analy','data science','data engineer','data visual','statistic','mlflow','xgboost','catboost','neural','computer vision','generative','prompt','ai','ml','dl','bi'] },
+  { name: 'Cloud & DevOps',color: '#f472b6', kw: ['aws','azure','gcp','google cloud','docker','kubernetes','k8s','terraform','ansible','jenkins','ci cd','cicd','github actions','linux','nginx','devops','lambda','cloud','vercel','heroku','helm','prometheus','grafana','serverless','sagemaker','vertex','bigquery','ec2'] },
+  { name: 'Frontend',      color: '#38bdf8', kw: ['react','angular','vue','svelte','next js','nextjs','nuxt','html','css','tailwind','bootstrap','jquery','redux','webpack','vite','sass','scss','figma','frontend','front end','responsive','material ui','web design','ui','ux'] },
+  { name: 'Backend & APIs',color: '#8b7cf6', kw: ['flask','django','fastapi','spring','express','node','nest','laravel','rails','asp net','dotnet','net','api','restful','rest api','graphql','grpc','microservice','jwt','oauth','websocket','celery','rabbitmq','backend','back end','server side','authentication','socket'] },
+  { name: 'Languages',     color: '#3d7dff', kw: ['python','java','javascript','typescript','js','ts','c','c++','cpp','c#','csharp','go','golang','rust','ruby','php','kotlin','swift','scala','r','dart','bash','shell','matlab','perl','lua','solidity'], whole: true },
+  { name: 'Tools & Practices', color: '#94a3b8', kw: ['git','github','gitlab','jira','postman','agile','scrum','testing','pytest','selenium','junit','jest','vscode','jupyter','notion','slack','confluence','swagger','unit test','tdd','code review'] },
+];
+const OTHER_CAT = { name: 'Other', color: '#475569' };
+
+function categorize(skill) {
+  const n = skill.toLowerCase().replace(/[^a-z0-9+#]+/g, ' ').trim();
+  const tokens = n.split(' ');
+  for (const cat of CATS) {
+    for (const k of cat.kw) {
+      if (cat.whole) { if (tokens.includes(k)) return cat; continue; }
+      if (k.length <= 3) { if (tokens.includes(k)) return cat; }
+      else if (k.length === 4) { if (tokens.some(t => t.startsWith(k))) return cat; }
+      else if (n.includes(k)) return cat;
+    }
+  }
+  return OTHER_CAT;
+}
+
+function skillBreakdown() {
+  const counts = new Map();
+  skillList().forEach(s => {
+    const c = categorize(s);
+    counts.set(c.name, { cat: c, n: (counts.get(c.name)?.n || 0) + 1 });
+  });
+  return [...counts.values()].sort((a, b) => b.n - a.n);
+}
+
+function renderSkillMix() {
+  const box = $('skillMix');
+  const parts = skillBreakdown();
+  const total = parts.reduce((a, p) => a + p.n, 0);
+  if (!total) {
+    box.innerHTML = emptyState('bx-pie-chart-alt-2', 'No skills yet. Add some below or <button class="lnk" data-goto="skills">upload your resume</button> to see your skill mix.');
+    return;
+  }
+  const R = 60, C = 2 * Math.PI * R;
+  let offset = 0;
+  const gap = parts.length > 1 ? 2.5 : 0;
+  const segs = parts.map(p => {
+    const len = (p.n / total) * C;
+    const seg = `<circle class="dn-seg" cx="86" cy="86" r="${R}" stroke="${p.cat.color}"
+      stroke-dasharray="${Math.max(len - gap, 0.5).toFixed(2)} ${(C - Math.max(len - gap, 0.5)).toFixed(2)}"
+      stroke-dashoffset="${(-offset).toFixed(2)}"><title>${esc(p.cat.name)}: ${p.n}</title></circle>`;
+    offset += len;
+    return seg;
+  }).join('');
+  const legend = parts.map(p => `
+    <div class="dn-row">
+      <span class="dn-dot" style="background:${p.cat.color}"></span>
+      <span class="nm">${esc(p.cat.name)}</span>
+      <span class="ct">${p.n} · ${Math.round(p.n / total * 100)}%</span>
+    </div>`).join('');
+  box.innerHTML = `
+    <div class="dn-wrap">
+      <div class="dn-chart">
+        <svg width="172" height="172" viewBox="0 0 172 172" role="img" aria-label="Skill mix by category">
+          <circle cx="86" cy="86" r="${R}" fill="none" stroke="var(--bg3)" stroke-width="22"/>${segs}
+        </svg>
+        <div class="dn-center"><b>${total}</b><small>skills</small></div>
+      </div>
+      <div class="dn-legend">${legend}</div>
+    </div>
+    <p class="pf-note">Skills are grouped automatically by keyword, so a few may land in "Other". Edit the pool below and the chart updates.</p>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Skills pool editor (same behaviour as before + dirty indicator)
+════════════════════════════════════════════════════════════════════ */
+function markDirty(on) { $('dirtyBadge').classList.toggle('show', !!on); }
+
+function updateSideSkillCount() { $('sideSkillCount').textContent = skillList().length; }
 
 function renderChips() {
   const tech = currentSkills.skills?.technical || {};
   const domain = currentSkills.skills?.domain_knowledge || {};
-  const techBox = document.getElementById('techChips');
-  const domainBox = document.getElementById('domainChips');
-  techBox.innerHTML = '';
-  domainBox.innerHTML = '';
+  const techBox = $('techChips'), domainBox = $('domainChips');
+  techBox.innerHTML = ''; domainBox.innerHTML = '';
 
   const flatTech = [];
-  Object.entries(tech).forEach(([k, subs]) => {
-    flatTech.push(k);
-    (subs || []).forEach(s => flatTech.push(s));
-  });
+  Object.entries(tech).forEach(([k, subs]) => { flatTech.push(k); (subs || []).forEach(s => flatTech.push(s)); });
   if (flatTech.length) flatTech.forEach(s => techBox.appendChild(makeChip(s)));
   else techBox.innerHTML = '<div class="pf-chip-empty">No technical skills yet</div>';
 
   const domainKeys = Object.keys(domain);
   if (domainKeys.length) domainKeys.forEach(s => domainBox.appendChild(makeChip(s)));
   else domainBox.innerHTML = '<div class="pf-chip-empty">No domain knowledge yet</div>';
+
+  updateSideSkillCount();
+  renderSkillMix();
+  updateKpis();
+  renderChecklist();
 }
 
 function makeChip(label) {
   const el = document.createElement('div');
   el.className = 'pf-chip';
-  el.innerHTML = `<span>${esc(label)}</span><button type="button">✕</button>`;
+  el.innerHTML = `<span>${esc(label)}</span><button type="button" aria-label="Remove ${esc(label)}"><i class='bx bx-x'></i></button>`;
   el.querySelector('button').addEventListener('click', () => removeSkill(label));
   return el;
 }
@@ -329,39 +931,46 @@ function removeSkill(label) {
   Object.keys(tech).forEach(k => { if (tech[k]) tech[k] = tech[k].filter(s => s !== label); });
   delete currentSkills.skills.domain_knowledge[label];
   currentSkills.all_skills_flat = (currentSkills.all_skills_flat || []).filter(s => s !== label);
+  markDirty(true);
   renderChips();
 }
 
-document.getElementById('newSkillInput').addEventListener('keydown', (e) => {
+$('newSkillInput').addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' || !e.target.value.trim()) return;
   const val = e.target.value.trim();
   currentSkills.skills.technical[val] = null;
   currentSkills.all_skills_flat = currentSkills.all_skills_flat || [];
   currentSkills.all_skills_flat.push(val);
-  renderChips();
   e.target.value = '';
+  markDirty(true);
+  renderChips();
 });
 
-document.getElementById('saveSkillsBtn').addEventListener('click', async () => {
+$('saveSkillsBtn').addEventListener('click', async () => {
+  const btn = $('saveSkillsBtn');
+  btn.disabled = true;
   try {
     const r = await fetch('/onboarding/confirm-skills', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ skills: currentSkills })
     });
     if (!r.ok) throw new Error();
-    showToast('✅ Skills saved');
+    markDirty(false);
+    showToast('Skills saved — refreshing your recommendations');
+    // Skills changed, so everything derived from them is stale.
+    loadRoleFit();
+    loadOpps();
   } catch (e) {
-    showToast('⚠️ Could not save skills');
+    showToast('Could not save skills');
+  } finally {
+    btn.disabled = false;
   }
 });
 
-renderChips();
-
-/* ── Resume re-upload ── */
-document.getElementById('resumeReupload').addEventListener('change', async (e) => {
+$('resumeReupload').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  showToast('⏳ Parsing resume…');
+  showToast('Parsing resume…');
   const fd = new FormData();
   fd.append('resume', file);
   try {
@@ -369,15 +978,17 @@ document.getElementById('resumeReupload').addEventListener('change', async (e) =
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Parsing failed');
     currentSkills = d.skills;
+    markDirty(true);
     renderChips();
-    showToast('✅ Resume parsed — review and click Save Skills below');
+    showToast('Resume parsed — review the pool and click Save skills');
   } catch (err) {
-    showToast('⚠️ ' + err.message);
+    showToast(err.message);
+  } finally {
+    e.target.value = '';
   }
 });
 
-/* ── Skills summary download (plain text, not a formatted resume) ── */
-document.getElementById('downloadSummaryBtn').addEventListener('click', () => {
+$('downloadSummaryBtn').addEventListener('click', () => {
   const tech = currentSkills.skills?.technical || {};
   const domain = currentSkills.skills?.domain_knowledge || {};
   let text = `CareerCompass Skills Summary\n`;
@@ -398,8 +1009,500 @@ document.getElementById('downloadSummaryBtn').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-function esc(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+/* ════════════════════════════════════════════════════════════════════
+   Account: display name
+════════════════════════════════════════════════════════════════════ */
+$('saveNameBtn').addEventListener('click', async () => {
+  const name = $('nameInput').value.trim();
+  if (!name) return showToast('Name cannot be empty');
+  try {
+    const r = await fetch('/profile/update-name', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    if (!r.ok) throw new Error();
+    $('sideName').textContent = name;
+    document.querySelectorAll('.nm-name').forEach(el => { el.textContent = name; });
+    showToast('Name updated');
+  } catch (e) {
+    showToast('Could not update name');
+  }
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   Ring helper (stroke-dashoffset animation)
+════════════════════════════════════════════════════════════════════ */
+function setRing(arc, pct, circumference) {
+  const off = circumference * (1 - Math.max(0, Math.min(100, pct)) / 100);
+  if (reduceMotion) arc.style.transition = 'none';
+  raf(() => { arc.style.strokeDashoffset = off; });
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   KPIs
+════════════════════════════════════════════════════════════════════ */
+function computeStreaks(counts) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const key = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  // current streak: today counts if active, otherwise start from yesterday
+  let cur = 0;
+  const d = new Date(today);
+  if (!counts[key(d)]) d.setDate(d.getDate() - 1);
+  while (counts[key(d)]) { cur++; d.setDate(d.getDate() - 1); }
+  // longest streak inside the window we have data for
+  const days = Object.keys(counts).length ? 17 * 7 : 0;
+  let best = 0, run = 0;
+  const w = new Date(today); w.setDate(w.getDate() - days);
+  for (let i = 0; i <= days; i++) {
+    if (counts[key(w)]) { run++; best = Math.max(best, run); } else run = 0;
+    w.setDate(w.getDate() + 1);
+  }
+  return { cur, best };
+}
+
+function bucketCompletions(list) {
+  const counts = {};
+  (list || []).forEach(ts => {
+    const d = new Date(ts);
+    if (isNaN(d)) return;
+    const k = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return counts;
+}
+
+function updateKpis() {
+  const skills = skillList();
+  $('kpiSkills').textContent = skills.length;
+  const cats = skillBreakdown().length;
+  $('kpiSkillsSub').textContent = skills.length ? `across ${cats} ${cats === 1 ? 'area' : 'areas'}` : 'add skills to get matched';
+
+  if (state.totalCompleted != null) {
+    $('kpiTopics').textContent = state.totalCompleted;
+    $('kpiTopicsSub').textContent = MY_ROADMAPS.length
+      ? `across ${MY_ROADMAPS.length} ${MY_ROADMAPS.length === 1 ? 'roadmap' : 'roadmaps'}` : 'pick a roadmap to start';
+  }
+  if (state.completions) {
+    const { cur, best } = computeStreaks(bucketCompletions(state.completions));
+    $('kpiStreak').innerHTML = `${cur}<small>${cur === 1 ? 'day' : 'days'}</small>`;
+    $('kpiStreakSub').textContent = best ? `best in 17 weeks: ${best}` : 'complete a topic to start one';
+  }
+  if (state.rankingOk === false || (state.roles && !state.roles.length)) {
+    $('kpiFit').textContent = '—';
+    $('kpiFitSub').textContent = 'add skills to see role fit';
+  } else if (state.roles && state.roles.length) {
+    const top = state.roles[0];
+    $('kpiFit').innerHTML = `${top.match_percent}<small>%</small>`;
+    $('kpiFitSub').textContent = top.title;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Role fit: radar chart + ranked recommendations
+════════════════════════════════════════════════════════════════════ */
+const shortTitle = (t, n = 17) => t.length > n ? t.slice(0, n - 1).trimEnd() + '…' : t;
+
+function renderRadar(roles) {
+  const box = $('radarBox');
+  const items = roles.slice(0, 6);
+  if (items.length < 3) { box.innerHTML = emptyState('bx-radar', 'Not enough data yet to draw a role-fit chart.'); return; }
+
+  const maxPct = Math.max(...items.map(r => r.match_percent));
+  const scaleMax = Math.max(30, Math.ceil((maxPct + 5) / 10) * 10);
+  const W = 380, H = 310, cx = 190, cy = 155, R = 98, n = items.length;
+  const ang = (i) => -Math.PI / 2 + i * 2 * Math.PI / n;
+  const pt = (i, f) => [cx + Math.cos(ang(i)) * R * f, cy + Math.sin(ang(i)) * R * f];
+  const poly = (f) => items.map((_, i) => pt(i, f).map(v => v.toFixed(1)).join(',')).join(' ');
+
+  const rings = [0.25, 0.5, 0.75, 1].map(f => `<polygon class="rd-ring" points="${poly(f)}"/>`).join('');
+  const axes = items.map((_, i) => { const [x, y] = pt(i, 1); return `<line class="rd-axis" x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; }).join('');
+  const area = items.map((r, i) => pt(i, Math.max(r.match_percent, 1) / scaleMax).map(v => v.toFixed(1)).join(',')).join(' ');
+  const dots = items.map((r, i) => {
+    const [x, y] = pt(i, Math.max(r.match_percent, 1) / scaleMax);
+    return `<circle class="rd-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"><title>${esc(r.title)}: ${r.match_percent}%</title></circle>`;
+  }).join('');
+  const labels = items.map((r, i) => {
+    const [x, y] = pt(i, 1.2);
+    const c = Math.cos(ang(i));
+    const anchor = Math.abs(c) < 0.25 ? 'middle' : (c > 0 ? 'start' : 'end');
+    const dy = Math.sin(ang(i)) > 0.6 ? 12 : (Math.sin(ang(i)) < -0.6 ? -4 : 4);
+    return `<text class="rd-label" x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anchor}">${esc(shortTitle(r.title))}</text>
+            <text class="rd-val" x="${x.toFixed(1)}" y="${(y + dy + 12).toFixed(1)}" text-anchor="${anchor}">${r.match_percent}%</text>`;
+  }).join('');
+
+  box.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Radar chart of your top ${n} role matches">
+      ${rings}${axes}
+      <polygon class="rd-area" points="${area}" style="transform-origin:${cx}px ${cy}px"/>
+      ${dots}${labels}
+    </svg>
+    <p class="pf-note" style="margin-top:.4rem;text-align:center">Chart scale: outer ring = ${scaleMax}% match</p>`;
+}
+
+const TIER_LABEL = { best: 'BEST MATCH', strong: 'STRONG', possible: 'POSSIBLE', low: 'LOW' };
+
+function renderRoleList(roles) {
+  const box = $('roleList');
+  const top = roles.slice(0, 5);
+  if (!top.length) { box.innerHTML = emptyState('bx-bulb', 'No recommendations yet.'); return; }
+
+  box.innerHTML = top.map((r, i) => {
+    const mine = MY_IDS.has(r.id);
+    return `
+    <div class="rl-row${i === 0 ? ' top' : ''}">
+      <div class="rl-rank">${r.match_rank}</div>
+      <div class="rl-info">
+        <div class="rl-title"><a href="/roadmap/${esc(r.type || 'role')}/${esc(r.slug)}">${esc(r.title)}</a>
+          <span class="rl-tier ${esc(r.match_tier || '')}">${esc(TIER_LABEL[r.match_tier] || '')}</span></div>
+        <div class="rl-bar"><i data-w="${r.match_percent}"></i></div>
+      </div>
+      <div class="rl-pct">${r.match_percent}%</div>
+      <button class="rl-add" data-id="${r.id}" ${mine ? 'disabled' : ''}>
+        ${mine ? "<i class='bx bx-check'></i> Added" : "<i class='bx bx-plus'></i> Add"}
+      </button>
+    </div>`;
+  }).join('');
+
+  const maxPct = Math.max(...top.map(r => r.match_percent), 1);
+  raf(() => box.querySelectorAll('.rl-bar i').forEach(el => {
+    el.style.width = Math.max(4, (Number(el.dataset.w) / maxPct) * 100) + '%';
+  }));
+
+  box.querySelectorAll('.rl-add:not(:disabled)').forEach(btn => btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      const r = await fetch('/api/v2/user/roadmaps', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roadmap_id: Number(btn.dataset.id), is_primary: false })
+      });
+      if (!r.ok) throw new Error();
+      MY_IDS.add(Number(btn.dataset.id));
+      btn.innerHTML = "<i class='bx bx-check'></i> Added";
+      showToast('Added to your roadmaps — find it on your dashboard');
+    } catch (e) {
+      btn.disabled = false;
+      showToast('Could not add roadmap');
+    }
+  }));
+}
+
+async function loadRoleFit() {
+  try {
+    const { ok, data } = await getJSON('/onboarding/suggested-roles');
+    if (!ok || !data) throw new Error('bad response');
+    state.rankingOk = !!data.ranking_available;
+    state.roles = (data.roles || []).filter(r => r.match_score !== null && r.match_score !== undefined)
+      .sort((a, b) => a.match_rank - b.match_rank);
+
+    if (!state.rankingOk || !state.roles.length) {
+      const msg = emptyState('bx-radar', 'We can\'t score roles yet. <button class="lnk" data-goto="skills">Add your skills or upload a resume</button> to see where you fit.');
+      $('radarBox').innerHTML = msg; $('roleList').innerHTML = msg;
+    } else {
+      renderRadar(state.roles);
+      renderRoleList(state.roles);
+    }
+  } catch (e) {
+    state.rankingOk = false;
+    const msg = emptyState('bx-error-circle', 'Couldn\'t load role recommendations right now.');
+    $('radarBox').innerHTML = msg; $('roleList').innerHTML = msg;
+  }
+  updateKpis();
+  renderChecklist();
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Learning activity heatmap + recent activity
+════════════════════════════════════════════════════════════════════ */
+function renderHeatmap(completions) {
+  const WEEKS = 17;
+  const counts = bucketCompletions(completions);
+  const keyOf = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - today.getDay() - (WEEKS - 1) * 7);   // Sunday of the first week
+
+  let cells = '', total = 0, active = 0, lastMonth = -1;
+  const monthMarks = [];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for (let w = 0; w < WEEKS; w++) {
+    const first = new Date(start); first.setDate(start.getDate() + w * 7);
+    if (first.getMonth() !== lastMonth) {
+      monthMarks.push({ col: w + 1, name: MONTHS[first.getMonth()] });
+      lastMonth = first.getMonth();
+    }
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(start); day.setDate(start.getDate() + w * 7 + d);
+      if (day > today) { cells += '<div class="hm-cell future"></div>'; continue; }
+      const n = counts[keyOf(day)] || 0;
+      if (n) { total += n; active++; }
+      const lvl = n === 0 ? 0 : n === 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : 4;
+      const label = `${n} ${n === 1 ? 'topic' : 'topics'} on ${day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+      cells += `<div class="hm-cell" data-l="${lvl}" title="${esc(label)}"></div>`;
+    }
+  }
+  const { cur, best } = computeStreaks(counts);
+  // A partial first week can put two month labels in adjacent columns; drop the first one then.
+  if (monthMarks.length > 1 && monthMarks[1].col - monthMarks[0].col < 3) monthMarks.shift();
+  const monthRow = monthMarks.map(m => `<span style="grid-column:${m.col}">${m.name}</span>`).join('');
+
+  $('heatBox').innerHTML = `
+    <div class="hm-wrap"><div class="hm-inner">
+      <div class="hm-months">${monthRow}</div>
+      <div class="hm-body">
+        <div class="hm-days"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+        <div class="hm-grid" role="img" aria-label="Heatmap of topics completed per day">${cells}</div>
+      </div>
+    </div></div>
+    <div class="hm-foot">
+      <div class="hm-stats">
+        <span><b>${total}</b> topics</span>
+        <span><b>${active}</b> active ${active === 1 ? 'day' : 'days'}</span>
+        <span class="flame"><i class='bx bxs-hot'></i> <b>${cur}</b>-day streak</span>
+        <span>best <b>${best}</b></span>
+      </div>
+      <div class="hm-legend">Less
+        <div class="hm-cell" data-l="0"></div><div class="hm-cell" data-l="1"></div><div class="hm-cell" data-l="2"></div><div class="hm-cell" data-l="3"></div><div class="hm-cell" data-l="4"></div>
+      More</div>
+    </div>`;
+  // newest weeks are on the right: keep them in view on narrow screens
+  const wrap = $('heatBox').querySelector('.hm-wrap');
+  if (wrap) wrap.scrollLeft = wrap.scrollWidth;
+}
+
+function timeAgo(iso) {
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return '';
+  const s = Math.max(0, (Date.now() - t) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + ' min ago';
+  if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+  const d = Math.floor(s / 86400);
+  if (d < 30) return d + (d === 1 ? ' day ago' : ' days ago');
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function renderTimeline(recent) {
+  const box = $('timeline');
+  if (!recent || !recent.length) {
+    box.innerHTML = emptyState('bx-time-five', 'Nothing completed yet. Open a roadmap and tick off your first topic.');
+    return;
+  }
+  box.innerHTML = recent.map(r => `
+    <div class="tl-item">
+      <div class="tl-dot"><i class='bx bx-check'></i></div>
+      <div class="tl-txt"><b>${esc(r.title)}</b><small>${esc(r.roadmap_title)} · ${esc(timeAgo(r.completed_at))}</small></div>
+    </div>`).join('');
+}
+
+async function loadOverview() {
+  try {
+    const { ok, data } = await getJSON('/profile/api/overview');
+    if (!ok || !data) throw new Error('bad response');
+    state.completions = data.completions || [];
+    state.recent = data.recent || [];
+    state.totalCompleted = data.total_completed || 0;
+    renderHeatmap(state.completions);
+    renderTimeline(state.recent);
+  } catch (e) {
+    $('heatBox').innerHTML = emptyState('bx-error-circle', 'Couldn\'t load your activity right now.');
+    $('timeline').innerHTML = '';
+  }
+  updateKpis();
+  renderChecklist();
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Roadmap data: "Next up" + section progress bars
+════════════════════════════════════════════════════════════════════ */
+const treeCache = {};
+
+async function fetchTree(slug) {
+  if (treeCache[slug]) return treeCache[slug];
+  const { ok, data } = await getJSON('/api/v2/roadmap/' + encodeURIComponent(slug));
+  if (!ok || !data) throw new Error('roadmap unavailable');
+  treeCache[slug] = data.topics || [];
+  return treeCache[slug];
+}
+
+function leavesOf(node, out) {
+  if (node.children && node.children.length) node.children.forEach(c => leavesOf(c, out));
+  else out.push(node);
+  return out;
+}
+
+function analyze(tree) {
+  return tree.map(sec => {
+    const leaves = leavesOf(sec, []);
+    return { title: sec.title, leaves, total: leaves.length, done: leaves.filter(l => l.completed).length };
+  });
+}
+
+function renderNextUp(sections) {
+  const box = $('nextUp');
+  const todo = [];
+  for (const s of sections) {
+    for (const l of s.leaves) if (!l.completed) todo.push({ title: l.title, section: s.title });
+    if (todo.length >= 5) break;
+  }
+  state.nextUpCount = todo.length;
+  $('nextUpSub').textContent = `On ${PRIMARY.title}`;
+  if (!todo.length) {
+    box.innerHTML = emptyState('bx-trophy', `You've completed every topic on ${esc(PRIMARY.title)}. <a href="/roles">Pick your next roadmap</a>.`);
+    return;
+  }
+  box.innerHTML = todo.slice(0, 5).map((t, i) => `
+    <a class="nx-item" href="/roadmap/${esc(PRIMARY.type)}/${esc(PRIMARY.slug)}">
+      <div class="nx-n">${i + 1}</div>
+      <div class="nx-txt"><b>${esc(t.title)}</b><small>${esc(t.section)}</small></div>
+      <i class='bx bx-right-arrow-alt'></i>
+    </a>`).join('');
+}
+
+function renderSectionBars(sections) {
+  const box = $('sectionBars');
+  if (!sections.length) { box.innerHTML = emptyState('bx-bar-chart-alt-2', 'This roadmap has no topics yet.'); return; }
+  box.innerHTML = `<div class="sb-list">` + sections.map(s => {
+    const pct = s.total ? Math.round(s.done / s.total * 100) : 0;
+    return `<div class="sb-row" title="${esc(s.title)}">
+      <span class="sb-name">${esc(s.title)}</span>
+      <div class="sb-track"><i class="${pct >= 100 ? 'full' : ''}" data-w="${pct}"></i></div>
+      <span class="sb-num">${s.done}/${s.total}</span>
+    </div>`;
+  }).join('') + `</div>`;
+  raf(() => box.querySelectorAll('.sb-track i').forEach(el => { el.style.width = el.dataset.w + '%'; }));
+}
+
+async function loadSectionBars(slug) {
+  const box = $('sectionBars');
+  box.innerHTML = '<div class="pf-skel" style="height:220px"></div>';
+  try { renderSectionBars(analyze(await fetchTree(slug))); }
+  catch (e) { box.innerHTML = emptyState('bx-error-circle', 'Couldn\'t load that roadmap right now.'); }
+}
+
+async function loadPrimaryRoadmap() {
+  const box = $('nextUp');
+  if (!PRIMARY) {
+    box.innerHTML = emptyState('bx-rocket', 'No roadmap yet. <a href="/roles">Pick one</a> and your next topics will show up here.');
+    return;
+  }
+  try { renderNextUp(analyze(await fetchTree(PRIMARY.slug))); }
+  catch (e) { box.innerHTML = emptyState('bx-error-circle', 'Couldn\'t load your roadmap right now.'); }
+}
+
+const rmSelect = $('rmSelect');
+if (rmSelect) rmSelect.addEventListener('change', () => loadSectionBars(rmSelect.value));
+
+/* ════════════════════════════════════════════════════════════════════
+   Matched opportunities
+════════════════════════════════════════════════════════════════════ */
+function deadlineChip(deadline) {
+  if (!deadline) return '';
+  const end = new Date(deadline + 'T23:59:59');
+  const days = Math.ceil((end - new Date()) / 86400000);
+  if (isNaN(days) || days < 0) return '';
+  if (days === 0) return '<span class="op-due soon">closes today</span>';
+  return `<span class="op-due ${days <= 7 ? 'soon' : ''}">${days} ${days === 1 ? 'day' : 'days'} left</span>`;
+}
+
+function logClick(id) {
+  fetch(`/api/v2/opportunities/${id}/interact`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event_type: 'clicked' }), keepalive: true,
+  }).catch(() => {});
+}
+
+async function loadOpps() {
+  const box = $('oppList');
+  try {
+    const { ok, status, data } = await getJSON('/api/v2/opportunities/match/me?limit=4');
+    if (status === 401) throw new Error('auth');
+    if (!ok || !data) throw new Error('bad response');
+    const items = data.opportunities || [];
+    if (data.reason || !items.length) {
+      box.innerHTML = emptyState('bx-briefcase-alt-2',
+        'No matches yet. <button class="lnk" data-goto="skills">Add more common skills</button> (languages, frameworks, tools) and check back.');
+      return;
+    }
+    box.innerHTML = items.map(o => {
+      const chips = (o.skills || []).slice(0, 3).map(s => `<span class="op-chip">${esc(s)}</span>`).join('');
+      const mc = Number(o._match_count) || 0;
+      const match = mc ? `<span class="op-chip match">${mc} skill ${mc === 1 ? 'match' : 'matches'}</span>` : '';
+      const sub = [o.org, o.location].filter(Boolean).join(' · ');
+      return `
+      <a class="op-item" href="${esc(safeUrl(o.url))}" target="_blank" rel="noopener" data-id="${Number(o.id)}">
+        <div class="op-top"><span class="op-type ${esc(o.opp_type)}">${esc(o.opp_type)}</span>${deadlineChip(o.deadline)}</div>
+        <div class="op-title">${esc(o.title)}</div>
+        ${sub ? `<div class="op-org">${esc(sub)}</div>` : ''}
+        <div class="op-chips">${match}${chips}</div>
+      </a>`;
+    }).join('');
+    box.querySelectorAll('.op-item').forEach(a => a.addEventListener('click', () => logClick(a.dataset.id)));
+  } catch (e) {
+    box.innerHTML = emptyState('bx-error-circle', 'Couldn\'t load matched opportunities right now.');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Profile strength (sidebar ring + checklist)
+════════════════════════════════════════════════════════════════════ */
+function strengthItems() {
+  const ml = currentSkills.ml_features || {};
+  const n = skillList().length;
+  const hasDegree = ml.degree_level && ml.degree_level !== 'unknown';
+  const hasExp = typeof ml.years_experience === 'number';
+  return [
+    { label: 'Add your skills',                       done: n > 0,                                       go: 'skills',   cta: 'Add' },
+    { label: 'List at least 10 skills',               done: n >= 10,                                     go: 'skills',   cta: 'Add more' },
+    { label: 'Resume details found (degree, experience)', done: !!(hasDegree && hasExp),                 go: 'skills',   cta: 'Upload' },
+    { label: 'Choose a default roadmap',              done: MY_ROADMAPS.length > 0,                      href: '/roles',  cta: 'Browse' },
+    { label: 'Complete your first topic',             done: (state.totalCompleted || 0) > 0,             href: PRIMARY ? `/roadmap/${PRIMARY.type}/${PRIMARY.slug}` : '/roles', cta: 'Start' },
+    { label: 'Reach 25% on a roadmap',                done: MY_ROADMAPS.some(r => r.progress_pct >= 25), href: PRIMARY ? `/roadmap/${PRIMARY.type}/${PRIMARY.slug}` : '/roles', cta: 'Go' },
+  ];
+}
+
+let strengthShown = -1;
+function renderChecklist() {
+  const items = strengthItems();
+  const done = items.filter(i => i.done).length;
+  const pct = Math.round(done / items.length * 100);
+
+  $('checklist').innerHTML = items.map(i => `
+    <div class="ck-item ${i.done ? 'done' : ''}">
+      <span class="ck-box"><i class='bx bx-check'></i></span>
+      <span class="ck-label">${esc(i.label)}</span>
+      ${i.done ? '' : (i.go
+        ? `<button class="ck-go" data-goto="${i.go}">${esc(i.cta)} →</button>`
+        : `<a class="ck-go" href="${esc(i.href)}">${esc(i.cta)} →</a>`)}
+    </div>`).join('');
+
+  $('strengthNum').textContent = pct + '%';
+  $('strengthHint').textContent = pct === 100 ? 'Your profile is fully set up.'
+    : `${items.length - done} ${items.length - done === 1 ? 'step' : 'steps'} left for sharper matches.`;
+  if (pct !== strengthShown) { setRing($('strengthArc'), pct, 144.5); strengthShown = pct; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Boot
+════════════════════════════════════════════════════════════════════ */
+if (PRIMARY) {
+  $('sideTarget').classList.add('show');
+  $('sideTargetTxt').textContent = PRIMARY.title;
+}
+
+// Roadmap-card rings (server-rendered data-pct)
+document.querySelectorAll('.rc-card').forEach(card => {
+  const arc = card.querySelector('.rc-arc');
+  if (arc) setRing(arc, Number(card.dataset.pct) || 0, 157.1);
+});
+
+showTab(location.hash.slice(1));
+renderChips();          // also paints skill mix, KPIs, checklist
+loadOverview();
+loadRoleFit();
+loadPrimaryRoadmap();
+loadOpps();
+if (rmSelect) loadSectionBars(rmSelect.value);
+
+})();
 </script>
 {% endblock %}
